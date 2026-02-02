@@ -186,6 +186,8 @@
       var revealEls = document.querySelectorAll('.reveal');
       if (!revealEls.length) return;
 
+      var isMobile = window.matchMedia('(max-width: 640px)').matches;
+      var rootMargin = isMobile ? '80px 0px -40px 0px' : '0px 0px -60px 0px';
       var observer = new IntersectionObserver(
         function (entries) {
           entries.forEach(function (entry) {
@@ -195,7 +197,7 @@
             }
           });
         },
-        { rootMargin: '0px 0px -60px 0px', threshold: 0.1 }
+        { rootMargin: rootMargin, threshold: 0.1 }
       );
 
       revealEls.forEach(function (el) {
