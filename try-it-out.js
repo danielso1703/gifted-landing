@@ -1,7 +1,7 @@
 // Try it out page - Supabase-powered gift browsing
 
 // Items logging: namespaced [Items] prefix, level controls debug visibility
-var ITEMS_LOG_LEVEL = 'info'; // 'debug' | 'info' | 'warn' | 'error'
+var ITEMS_LOG_LEVEL = 'debug'; // 'debug' | 'info' | 'warn' | 'error'
 function itemsLog(level, msg, data) {
   if (level === 'debug' && ITEMS_LOG_LEVEL !== 'debug') return;
   var prefix = '[Items]';
@@ -57,7 +57,8 @@ const state = {
   currentModalIndex: -1,
   currentItemsList: [],
   suggestions: [],
-  focusedSuggestionIndex: -1
+  focusedSuggestionIndex: -1,
+  currentImageIndex: 0
 };
 
 // DOM elements
@@ -214,7 +215,15 @@ function setupEventListeners() {
       state.items = [];
       updateSubClusters();
       updateCategories();
-      loadItems();
+
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        setFiltersVisibility();
+        updateTrendingLabel();
+        loadItems();
+      } else {
+        goBackToTrending();
+      }
     });
   }
 
@@ -225,7 +234,15 @@ function setupEventListeners() {
       state.page = 0;
       state.items = [];
       updateCategories();
-      loadItems();
+
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        setFiltersVisibility();
+        updateTrendingLabel();
+        loadItems();
+      } else {
+        goBackToTrending();
+      }
     });
   }
 
@@ -234,7 +251,15 @@ function setupEventListeners() {
       state.selectedCategory = e.target.value || null;
       state.page = 0;
       state.items = [];
-      loadItems();
+
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        setFiltersVisibility();
+        updateTrendingLabel();
+        loadItems();
+      } else {
+        goBackToTrending();
+      }
     });
   }
 
@@ -245,11 +270,11 @@ function setupEventListeners() {
     });
   }
 
-  // Who filters: selecting recipient switches to search view and loads; clearing recipient clears grid
+  // Who filters: selecting any filter switches to search view and loads; clearing all returns to trending
   if (elements.createRecipient) {
     elements.createRecipient.addEventListener('change', function () {
       syncWhoFromFilters();
-      if (state.selectedRecipient) {
+      if (hasActiveFilters()) {
         state.isDefaultView = false;
         state.page = 0;
         state.items = [];
@@ -259,47 +284,41 @@ function setupEventListeners() {
         hideEmptyState();
         loadItems();
       } else {
-        if (state.isDefaultView) return;
-        if (elements.itemsContainer) {
-          elements.itemsContainer.innerHTML = '';
-          elements.itemsContainer.className = '';
-        }
-        state.isDefaultView = true;
-        updateTrendingLabel();
-        setFiltersVisibility();
-        loadDefaultView();
+        goBackToTrending();
       }
     });
   }
   if (elements.createAge) {
     elements.createAge.addEventListener('change', function () {
       syncWhoFromFilters();
-      if (state.selectedRecipient) {
-        if (state.isDefaultView) {
-          state.isDefaultView = false;
-          updateTrendingLabel();
-          setFiltersVisibility();
-          loadClusters();
-        }
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
         state.page = 0;
         state.items = [];
+        updateTrendingLabel();
+        setFiltersVisibility();
+        loadClusters();
+        hideEmptyState();
         loadItems();
+      } else {
+        goBackToTrending();
       }
     });
   }
   if (elements.createGender) {
     elements.createGender.addEventListener('change', function () {
       syncWhoFromFilters();
-      if (state.selectedRecipient) {
-        if (state.isDefaultView) {
-          state.isDefaultView = false;
-          updateTrendingLabel();
-          setFiltersVisibility();
-          loadClusters();
-        }
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
         state.page = 0;
         state.items = [];
+        updateTrendingLabel();
+        setFiltersVisibility();
+        loadClusters();
+        hideEmptyState();
         loadItems();
+      } else {
+        goBackToTrending();
       }
     });
   }
@@ -317,6 +336,19 @@ function setupEventListeners() {
       goBackToTrending();
     });
   }
+}
+
+// Helper to check if any filters are active
+function hasActiveFilters() {
+  return !!(
+    state.selectedRecipient ||
+    state.selectedAge ||
+    state.selectedGender ||
+    state.selectedCluster ||
+    state.selectedSubCluster ||
+    state.selectedCategory ||
+    state.searchQuery
+  );
 }
 
 // Fixed recipient options (value sent to API; display is capitalized)
@@ -670,7 +702,9 @@ function renderDefaultView() {
     elements.itemsContainer.appendChild(section);
 
     (function attachCarouselControls(carouselEl, gridEl, prevEl, nextEl) {
+      var isPointerDown = false;
       var isDragging = false;
+      var dragThreshold = 6;
       var startX = 0;
       var startScrollLeft = 0;
       var lastX = 0;
@@ -727,7 +761,8 @@ function renderDefaultView() {
 
       var onPointerDown = function (e) {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        isDragging = true;
+        isPointerDown = true;
+        isDragging = false;
         startX = e.clientX;
         lastX = e.clientX;
         startScrollLeft = gridEl.scrollLeft;
@@ -736,16 +771,19 @@ function renderDefaultView() {
 
         cancelAnimationFrame(RAF);
         RAF = null;
-
-        gridEl.classList.add('is-dragging');
-        gridEl.style.scrollSnapType = 'none'; // Disable snap during drag
-        gridEl.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag
-
-        try { gridEl.setPointerCapture(e.pointerId); } catch (err) { }
       };
 
       var onPointerMove = function (e) {
-        if (!isDragging) return;
+        if (!isPointerDown) return;
+        var delta = e.clientX - startX;
+        if (!isDragging) {
+          if (Math.abs(delta) < dragThreshold) return;
+          isDragging = true;
+          gridEl.classList.add('is-dragging');
+          gridEl.style.scrollSnapType = 'none'; // Disable snap during drag
+          gridEl.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag
+          try { gridEl.setPointerCapture(e.pointerId); } catch (err) { }
+        }
         var now = performance.now();
         var dt = now - lastTime;
         if (dt > 0) {
@@ -756,34 +794,36 @@ function renderDefaultView() {
           lastX = e.clientX;
           lastTime = now;
         }
-        var delta = e.clientX - startX;
         gridEl.scrollLeft = startScrollLeft - delta;
       };
 
       var onPointerUp = function (e) {
-        if (!isDragging) return;
-        isDragging = false;
+        if (!isPointerDown) return;
+        isPointerDown = false;
 
         // Restore scroll behavior
         gridEl.style.scrollBehavior = '';
 
-        // Prevent click if we moved more than 10px
-        var totalDelta = Math.abs(e.clientX - startX);
-        if (totalDelta > 10) {
-          gridEl.classList.add('prevent-click');
-          // Short timeout to allow click event to be swallowed
-          setTimeout(function () {
-            gridEl.classList.remove('prevent-click');
-          }, 50);
-        }
+        if (isDragging) {
+          isDragging = false;
+          // Prevent click if we moved more than 10px
+          var totalDelta = Math.abs(e.clientX - startX);
+          if (totalDelta > 10) {
+            gridEl.classList.add('prevent-click');
+            // Short timeout to allow click event to be swallowed
+            setTimeout(function () {
+              gridEl.classList.remove('prevent-click');
+            }, 50);
+          }
 
-        // Apply momentum if velocity is significant
-        if (Math.abs(velocity) > 2) {
-          RAF = requestAnimationFrame(momentumScroll);
-        } else {
-          gridEl.classList.remove('is-dragging');
-          gridEl.style.scrollSnapType = ''; // Restore snap
-          updateButtons();
+          // Apply momentum if velocity is significant
+          if (Math.abs(velocity) > 2) {
+            RAF = requestAnimationFrame(momentumScroll);
+          } else {
+            gridEl.classList.remove('is-dragging');
+            gridEl.style.scrollSnapType = ''; // Restore snap
+            updateButtons();
+          }
         }
       };
 
@@ -803,6 +843,7 @@ function renderDefaultView() {
 function openModal(item, list, index) {
   state.currentItemsList = list;
   state.currentModalIndex = index;
+  state.currentImageIndex = 0;
   updateModalContent(item);
 
   const modal = document.getElementById('product-modal');
@@ -830,7 +871,8 @@ function updateModalContent(item) {
   const giftItem = item.gift_items;
   if (!giftItem) return;
 
-  const imageUrl = giftItem.image_url || (giftItem.images && giftItem.images[0]);
+  const images = giftItem.images && giftItem.images.length > 0 ? giftItem.images : (giftItem.image_url ? [giftItem.image_url] : []);
+  const imageUrl = images[state.currentImageIndex] || images[0];
   const title = giftItem.local_title || giftItem.title;
   const description = giftItem.description || '';
   const category = item.category || item.sub_cluster || item.cluster || '';
@@ -849,8 +891,55 @@ function updateModalContent(item) {
   document.getElementById('modal-category').textContent = category;
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-price').textContent = priceText;
-  document.getElementById('modal-description').textContent = description;
+  const descriptionEl = document.getElementById('modal-description');
+  const descriptionToggle = document.getElementById('modal-description-toggle');
+  if (descriptionEl) {
+    descriptionEl.textContent = description;
+    descriptionEl.classList.remove('is-expanded');
+  }
+  if (descriptionToggle) {
+    descriptionToggle.textContent = 'More';
+    descriptionToggle.style.display = 'none';
+    descriptionToggle.setAttribute('aria-expanded', 'false');
+  }
+  if (descriptionEl && descriptionToggle) {
+    window.requestAnimationFrame(function () {
+      if (descriptionEl.scrollHeight > descriptionEl.clientHeight + 1) {
+        descriptionToggle.style.display = 'inline-flex';
+      }
+    });
+  }
   document.getElementById('modal-shop-btn').href = giftItem.url;
+
+  // Update pagination dots and image cursor
+  const paginationContainer = document.getElementById('image-pagination');
+  const modalImage = document.getElementById('modal-image');
+
+  // Reset
+  if (paginationContainer) paginationContainer.innerHTML = '';
+  if (modalImage) modalImage.classList.remove('has-multiple');
+
+  if (images.length > 1) {
+    if (modalImage) modalImage.classList.add('has-multiple');
+    if (paginationContainer) {
+      images.forEach((_, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'pagination-dot' + (idx === state.currentImageIndex ? ' is-active' : '');
+        paginationContainer.appendChild(dot);
+      });
+    }
+  }
+}
+
+// Show next image (looping)
+function showNextImage() {
+  const item = state.currentItemsList[state.currentModalIndex];
+  if (!item || !item.gift_items) return;
+  const images = item.gift_items.images || [];
+  if (images.length <= 1) return;
+
+  state.currentImageIndex = (state.currentImageIndex + 1) % images.length;
+  updateModalContent(item);
 }
 
 // Show next item in modal
@@ -890,7 +979,7 @@ function buildItemCard(item) {
   var categoryLabel = item.category || item.sub_cluster || item.cluster || '';
   var card = document.createElement('div');
   card.className = 'item-card item-card--animate';
-  card.innerHTML = '<a class="item-image" href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></a><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.innerHTML = '<div class="item-image"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
   // Ensure link clicks don't trigger the preview modal
   var cardLinks = card.querySelectorAll('a');
@@ -902,12 +991,15 @@ function buildItemCard(item) {
 
   // click to open modal
   card.addEventListener('click', function (e) {
+    itemsLog('debug', 'Card clicked', { target: e.target, preventClick: card.closest('.items-grid').classList.contains('prevent-click') });
+
     // If the grid is in prevent-click mode (just finished a drag), ignore
     if (card.closest('.items-grid').classList.contains('prevent-click')) {
       return;
     }
-    // Clicking the image or shop link should go to the product URL, not the preview modal
+    // Clicking the shop link should go to the product URL, not the preview modal
     if (e.target.closest('a')) {
+      itemsLog('debug', 'Shop link clicked');
       return;
     }
 
@@ -932,6 +1024,7 @@ function buildItemCard(item) {
       index = state.items.indexOf(item);
     }
 
+    itemsLog('debug', 'Calling openModal', { index: index, item: item });
     if (index !== -1) {
       openModal(item, list, index);
     }
@@ -949,11 +1042,21 @@ document.addEventListener('DOMContentLoaded', function () {
   const prevBtn = modal.querySelector('.modal-prev-btn');
   const nextBtn = modal.querySelector('.modal-next-btn');
   const overlay = modal.querySelector('.modal-overlay');
+  const descriptionToggle = modal.querySelector('#modal-description-toggle');
+  const descriptionEl = modal.querySelector('#modal-description');
 
   function handleClose() { closeModal(); }
 
   closeBtn.addEventListener('click', handleClose);
   overlay.addEventListener('click', handleClose);
+
+  if (descriptionToggle && descriptionEl) {
+    descriptionToggle.addEventListener('click', function () {
+      const isExpanded = descriptionEl.classList.toggle('is-expanded');
+      descriptionToggle.textContent = isExpanded ? 'Less' : 'More';
+      descriptionToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    });
+  }
 
   // Keyboard nav
   document.addEventListener('keydown', function (e) {
@@ -983,11 +1086,20 @@ document.addEventListener('DOMContentLoaded', function () {
   function handleSwipe() {
     const swipeThreshold = 50;
     if (touchEndX < touchStartX - swipeThreshold) {
-      showNextItem(); // Swipe Left -> Next
+      showNextItem(); // Swipe Left -> Next Item
     }
     if (touchEndX > touchStartX + swipeThreshold) {
-      showPrevItem(); // Swipe Right -> Prev
+      showPrevItem(); // Swipe Right -> Prev Item
     }
+  }
+
+  // Tap/Click image to advance (if multiple)
+  const modalImage = document.getElementById('modal-image');
+  if (modalImage) {
+    modalImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showNextImage();
+    });
   }
 });
 
@@ -1100,20 +1212,9 @@ function renderCategorySelect() {
 
 // Load items with filters (search view only)
 async function loadItems() {
-  if ((state.isDefaultView && !state.searchQuery) || (!state.selectedRecipient && !state.searchQuery)) {
-    // If default view and no search, OR no recipient and no search: do nothing (stay in default view or empty)
-    // Actually, if !selectedRecipient and !state.isDefaultView and !searchQuery -> this is an odd state, likely transition.
-    // But relying on goBackToTrending for the clear case.
-    if (state.isDefaultView) {
-      hideLoading();
-      return;
-    }
-    // If not default view but no recipient and no search, we might want to load global allowed items? 
-    // For now proceed if query exists or recipient exists.
-    if (!state.selectedRecipient && !state.searchQuery) {
-      hideLoading();
-      return;
-    }
+  if (state.isDefaultView && !hasActiveFilters()) {
+    hideLoading();
+    return;
   }
 
   try {
@@ -1198,10 +1299,22 @@ async function loadItems() {
       return item.gift_items && item.gift_items.url;
     });
 
+    // Deduplicate items by gift_item_id (especially when no recipient filter is used)
+    const seenIds = new Set();
+    filteredData = filteredData.filter(item => {
+      const id = item.gift_item_id || item.gift_items.id;
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+
     if (startPage === 0) {
       state.items = filteredData;
     } else {
-      state.items = state.items.concat(filteredData);
+      // Avoid duplicates with already loaded items
+      const existingIds = new Set(state.items.map(item => item.gift_item_id || item.gift_items.id));
+      const newItems = filteredData.filter(item => !existingIds.has(item.gift_item_id || item.gift_items.id));
+      state.items = state.items.concat(newItems);
     }
 
     // Determine hasMore based on raw data length

@@ -1428,15 +1428,45 @@ section {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-accent);
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
 }
 
 .modal-description {
   font-size: 1rem;
   line-height: 1.6;
   color: var(--color-text);
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.modal-description.is-expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+.modal-description-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.modal-description-toggle:hover {
+  text-decoration: underline;
 }
 
 .modal-actions {
@@ -1536,4 +1566,43 @@ section {
   .modal-nav-btn {
     display: none;
   }
+}
+
+
+/* Image Pagination */
+.image-pagination {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.pagination-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.pagination-dot.is-active {
+  background: var(--color-accent);
+  transform: scale(1.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Image pointer behavior */
+.modal-image {
+  /* Default handled in JS */
+  transition: opacity 0.2s ease;
+}
+
+.modal-image.has-multiple {
+  cursor: pointer;
 }
