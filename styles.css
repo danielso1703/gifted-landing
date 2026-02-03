@@ -901,7 +901,8 @@ section {
 
 .trending-section .items-grid--carousel {
   grid-auto-flow: column;
-  grid-auto-columns: minmax(220px, 1fr);
+  grid-auto-columns: calc(50% - 0.75rem);
+  /* Default mobile: 2 columns */
   grid-template-columns: unset;
   overflow-x: auto;
   overflow-y: hidden;
@@ -915,13 +916,19 @@ section {
   scrollbar-width: none;
 }
 
+@media (min-width: 768px) {
+  .trending-section .items-grid--carousel {
+    grid-auto-columns: minmax(260px, 1fr);
+  }
+}
+
 .trending-section .items-grid--carousel::-webkit-scrollbar {
   display: none;
 }
 
 .trending-section .items-grid--carousel .item-card {
   scroll-snap-align: start;
-  min-width: 220px;
+  min-width: 0;
 }
 
 .trending-section .items-grid--carousel.is-dragging {
@@ -948,9 +955,15 @@ section {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s, opacity 0.2s, border-color 0.2s;
-  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .carousel-btn {
+    display: none !important;
+  }
 }
 
 .carousel-btn:hover {
@@ -1264,8 +1277,10 @@ section {
   }
 
   .trending-section .items-grid--carousel {
-    grid-auto-columns: minmax(200px, 1fr);
+    grid-auto-columns: calc(50% - 0.5rem);
     gap: 1rem;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   .item-content {
