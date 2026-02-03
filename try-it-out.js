@@ -65,6 +65,7 @@ const elements = {
   createGender: null,
   trendingLabel: null,
   searchInput: null,
+  clearSearchBtn: null,
   clusterSelect: null,
   subClusterSelect: null,
   categorySelect: null,
@@ -96,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.createGender = document.getElementById('create-gender');
   elements.trendingLabel = document.getElementById('trending-label');
   elements.searchInput = document.getElementById('search-input');
+  elements.clearSearchBtn = document.getElementById('clear-search-btn');
   elements.clusterSelect = document.getElementById('cluster-select');
   elements.subClusterSelect = document.getElementById('sub-cluster-select');
   elements.categorySelect = document.getElementById('category-select');
@@ -136,11 +138,29 @@ function setupEventListeners() {
     elements.searchInput.addEventListener('input', function (e) {
       clearTimeout(state.searchTimeout);
       state.searchQuery = e.target.value.trim();
+
+      // Toggle clear button
+      if (elements.clearSearchBtn) {
+        elements.clearSearchBtn.style.display = state.searchQuery ? '' : 'none';
+      }
+
       state.searchTimeout = setTimeout(function () {
         state.page = 0;
         state.items = [];
         loadItems();
       }, 300);
+    });
+  }
+
+  // Clear search button
+  if (elements.clearSearchBtn) {
+    elements.clearSearchBtn.addEventListener('click', function () {
+      if (elements.searchInput) {
+        elements.searchInput.value = '';
+        // Trigger input event to update state/UI or do it manually
+        elements.searchInput.dispatchEvent(new Event('input'));
+        elements.searchInput.focus();
+      }
     });
   }
 
@@ -337,7 +357,10 @@ function goBackToTrending() {
   state.searchQuery = '';
   state.items = [];
   state.page = 0;
-  if (elements.searchInput) elements.searchInput.value = '';
+  if (elements.searchInput) {
+    elements.searchInput.value = '';
+    if (elements.clearSearchBtn) elements.clearSearchBtn.style.display = 'none';
+  }
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
@@ -464,14 +487,59 @@ function renderDefaultView() {
     seeAllLink.addEventListener('click', function () { openFeedForRecipient(r.value); });
     header.appendChild(seeAllLink);
     section.appendChild(header);
+
+    var carousel = document.createElement('div');
+    carousel.className = 'trending-carousel';
+
+    var prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'carousel-btn carousel-btn--prev';
+    prevBtn.setAttribute('aria-label', 'Scroll left');
+    prevBtn.innerHTML = '&#8249;';
+
+    var nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'carousel-btn carousel-btn--next';
+    nextBtn.setAttribute('aria-label', 'Scroll right');
+    nextBtn.innerHTML = '&#8250;';
+
     var grid = document.createElement('div');
-    grid.className = 'items-grid';
+    grid.className = 'items-grid items-grid--carousel';
     items.forEach(function (item) {
       var card = buildItemCard(item);
       if (card) grid.appendChild(card);
     });
-    section.appendChild(grid);
+
+    carousel.appendChild(prevBtn);
+    carousel.appendChild(grid);
+    carousel.appendChild(nextBtn);
+    section.appendChild(carousel);
     elements.itemsContainer.appendChild(section);
+
+    (function attachCarouselControls(carouselEl, gridEl, prevEl, nextEl) {
+      var updateButtons = function () {
+        var maxScroll = gridEl.scrollWidth - gridEl.clientWidth;
+        var left = gridEl.scrollLeft;
+        prevEl.disabled = left <= 2;
+        nextEl.disabled = left >= maxScroll - 2;
+        prevEl.classList.toggle('is-disabled', prevEl.disabled);
+        nextEl.classList.toggle('is-disabled', nextEl.disabled);
+      };
+
+      var scrollByAmount = function (direction) {
+        var card = gridEl.querySelector('.item-card');
+        var cardWidth = card ? card.getBoundingClientRect().width : 280;
+        var gap = parseFloat(getComputedStyle(gridEl).columnGap || getComputedStyle(gridEl).gap || 16);
+        var delta = (cardWidth + gap) * 2 * direction;
+        gridEl.scrollBy({ left: delta, behavior: 'smooth' });
+      };
+
+      prevEl.addEventListener('click', function () { scrollByAmount(-1); });
+      nextEl.addEventListener('click', function () { scrollByAmount(1); });
+      gridEl.addEventListener('scroll', function () { window.requestAnimationFrame(updateButtons); });
+
+      window.requestAnimationFrame(updateButtons);
+    })(carousel, grid, prevBtn, nextBtn);
   });
   if (elements.loadMoreBtn) elements.loadMoreBtn.style.display = 'none';
 }

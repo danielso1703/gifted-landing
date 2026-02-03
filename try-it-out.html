@@ -47,47 +47,51 @@
       </div>
 
       <!-- Unified filters: row 1 = search; row 2 = Topic/Area/Category; row 3 = Recipient/Age/Gender (below Topic) -->
+      <!-- Unified filters: Search + Grid of dropdowns -->
       <div id="filters-section" class="filters-section">
-        <div class="filters-top-row">
+        <div class="search-row">
           <div class="search-wrapper">
             <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
-              autocomplete="off">
+              aria-label="Search for gifts" autocomplete="off">
+            <button type="button" id="clear-search-btn" class="clear-search-btn" aria-label="Clear search"
+              style="display: none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         </div>
 
-        <div class="filters-row">
-          <div class="filter-group">
-            <label for="cluster-select" class="filter-label">Topic</label>
-            <select id="cluster-select" class="filter-select">
+        <div class="filters-grid">
+          <div class="filter-item">
+            <select id="cluster-select" class="filter-select" aria-label="Topic">
               <option value="">All Topics</option>
             </select>
           </div>
 
-          <div id="filter-group-area" class="filter-group" style="display: none;">
-            <label for="sub-cluster-select" class="filter-label">Area</label>
-            <select id="sub-cluster-select" class="filter-select">
+          <!-- Sub-filters (hidden by default) -->
+          <div id="filter-group-area" class="filter-item" style="display: none;">
+            <select id="sub-cluster-select" class="filter-select" aria-label="Area">
               <option value="">All Areas</option>
             </select>
           </div>
 
-          <div id="filter-group-category" class="filter-group" style="display: none;">
-            <label for="category-select" class="filter-label">Category</label>
-            <select id="category-select" class="filter-select">
+          <div id="filter-group-category" class="filter-item" style="display: none;">
+            <select id="category-select" class="filter-select" aria-label="Category">
               <option value="">All Categories</option>
             </select>
           </div>
-        </div>
 
-        <div class="filters-who-row">
-          <div class="filter-group">
-            <label for="create-recipient" class="filter-label">Recipient</label>
-            <select id="create-recipient" class="filter-select">
+          <div class="filter-item">
+            <select id="create-recipient" class="filter-select" aria-label="Recipient">
               <option value="">Select recipient</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label for="create-age" class="filter-label">Age</label>
-            <select id="create-age" class="filter-select">
+
+          <div class="filter-item">
+            <select id="create-age" class="filter-select" aria-label="Age">
               <option value="">Any age</option>
               <option value="18-24">18–24</option>
               <option value="25-34">25–34</option>
@@ -97,10 +101,10 @@
               <option value="65+">65+</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label for="create-gender" class="filter-label">Gender</label>
-            <select id="create-gender" class="filter-select">
-              <option value="">Any</option>
+
+          <div class="filter-item">
+            <select id="create-gender" class="filter-select" aria-label="Gender">
+              <option value="">Any gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="unisex">Unisex</option>
@@ -133,6 +137,51 @@
       </p>
     </div>
   </footer>
+
+  <!-- Product Preview Modal -->
+  <div id="product-modal" class="modal" aria-hidden="true" style="display: none;">
+    <div class="modal-overlay" tabindex="-1" data-close="true"></div>
+    <div class="modal-container" role="dialog" aria-modal="true">
+      <button type="button" class="modal-close-btn" aria-label="Close modal" data-close="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <button type="button" class="modal-nav-btn modal-prev-btn" aria-label="Previous item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button type="button" class="modal-nav-btn modal-next-btn" aria-label="Next item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="modal-content">
+        <div class="modal-image-wrapper">
+          <img id="modal-image" src="" alt="" class="modal-image">
+        </div>
+        <div class="modal-details">
+          <div class="modal-header">
+            <span id="modal-category" class="modal-category"></span>
+            <h2 id="modal-title" class="modal-title"></h2>
+          </div>
+          <p id="modal-price" class="modal-price"></p>
+          <div id="modal-description" class="modal-description"></div>
+          <div class="modal-actions">
+            <a id="modal-shop-btn" href="#" target="_blank" rel="noopener" class="modal-shop-btn">Shop Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Supabase JS library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
