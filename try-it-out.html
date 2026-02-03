@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="Assets/best-large-fill-2.png">
+  <link rel="apple-touch-icon" href="Assets/best-large-fill-2.png">
+  <title>Try it out — Gifted</title>
+  <meta name="description" content="Browse trending gift ideas by recipient type, category, and interests.">
+  <meta property="og:title" content="Try it out — Gifted">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="page page-try-it-out">
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo-link">
+        <span>Gifted</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="try-it-out.html">Try it out</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+        <a href="mailto:team@topnotchgifts.ca">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <div class="container try-it-out-container">
+      <h1>Try it out</h1>
+      <p class="page-subtitle">Browse trending gift ideas by recipient type, category, and interests.</p>
+
+      <!-- Error state -->
+      <div id="error-state" class="error-message" style="display: none;"></div>
+
+      <!-- Default trending + nav: Back to trending (search view only) -->
+      <div class="trending-create-row">
+        <p id="trending-label" class="trending-label">Trending for everyone</p>
+        <div class="trending-create-actions">
+          <button type="button" id="back-to-trending-btn" class="back-to-trending-btn" style="display: none;">Back to
+            trending</button>
+        </div>
+      </div>
+
+      <!-- Unified filters: row 1 = search; row 2 = Topic/Area/Category; row 3 = Recipient/Age/Gender (below Topic) -->
+      <div id="filters-section" class="filters-section">
+        <div class="filters-top-row">
+          <div class="search-wrapper">
+            <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
+              autocomplete="off">
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <div class="filter-group">
+            <label for="cluster-select" class="filter-label">Topic</label>
+            <select id="cluster-select" class="filter-select">
+              <option value="">All Topics</option>
+            </select>
+          </div>
+
+          <div id="filter-group-area" class="filter-group" style="display: none;">
+            <label for="sub-cluster-select" class="filter-label">Area</label>
+            <select id="sub-cluster-select" class="filter-select">
+              <option value="">All Areas</option>
+            </select>
+          </div>
+
+          <div id="filter-group-category" class="filter-group" style="display: none;">
+            <label for="category-select" class="filter-label">Category</label>
+            <select id="category-select" class="filter-select">
+              <option value="">All Categories</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filters-who-row">
+          <div class="filter-group">
+            <label for="create-recipient" class="filter-label">Recipient</label>
+            <select id="create-recipient" class="filter-select">
+              <option value="">Select recipient</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="create-age" class="filter-label">Age</label>
+            <select id="create-age" class="filter-select">
+              <option value="">Any age</option>
+              <option value="18-24">18–24</option>
+              <option value="25-34">25–34</option>
+              <option value="35-44">35–44</option>
+              <option value="45-54">45–54</option>
+              <option value="55-64">55–64</option>
+              <option value="65+">65+</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="create-gender" class="filter-label">Gender</label>
+            <select id="create-gender" class="filter-select">
+              <option value="">Any</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unisex">Unisex</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading-state" class="loading-message" style="display: none;" aria-live="polite"></div>
+
+      <!-- Empty state -->
+      <div id="empty-state" class="empty-message" style="display: none;">
+        <p>No items found — try another recipient or filter.</p>
+      </div>
+
+      <!-- Items: default = sections per recipient; search = single grid -->
+      <div id="items-container"></div>
+
+      <!-- Load more button -->
+      <div class="load-more-wrapper">
+        <button id="load-more-btn" class="load-more-btn" style="display: none;">Load more</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-bottom">
+      <p><a href="index.html">Gifted</a> · <a href="privacy.html">Privacy</a> · <a
+          href="affiliate-disclosure.html">Affiliate Disclosure</a> · <a href="mailto:team@topnotchgifts.ca">Contact</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- Supabase JS library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Taxonomy (loaded as script so it works with file://) -->
+  <script src="items_database/taxonomy.js"></script>
+  <!-- Configuration -->
+  <script src="config.js"></script>
+  <!-- Page logic -->
+  <script src="try-it-out.js"></script>
+</body>
+
+</html>
