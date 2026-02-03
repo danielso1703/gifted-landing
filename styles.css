@@ -712,6 +712,53 @@ section {
   box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
+.search-wrapper {
+  position: relative;
+}
+
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: -2px;
+}
+
+.suggestion-item {
+  padding: 0.875rem 1.25rem;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.suggestion-item:hover,
+.suggestion-item.is-focused {
+  background: var(--color-surface);
+  color: var(--color-accent);
+}
+
+.suggestion-item-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.suggestion-item:hover .suggestion-item-icon,
+.suggestion-item.is-focused .suggestion-item-icon {
+  color: var(--color-accent);
+}
+
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -858,6 +905,8 @@ section {
   grid-template-columns: unset;
   overflow-x: auto;
   overflow-y: hidden;
+  cursor: grab;
+  touch-action: pan-y;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 0.5rem;
   gap: 1.25rem;
@@ -873,6 +922,17 @@ section {
 .trending-section .items-grid--carousel .item-card {
   scroll-snap-align: start;
   min-width: 220px;
+}
+
+.trending-section .items-grid--carousel.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.trending-section .items-grid--carousel.is-dragging .item-card {
+  pointer-events: none;
 }
 
 .carousel-btn {
@@ -989,6 +1049,7 @@ section {
 }
 
 .item-image {
+  display: block;
   width: 100%;
   aspect-ratio: 1;
   background: var(--color-surface);
@@ -1213,5 +1274,266 @@ section {
 
   .item-title {
     font-size: 0.875rem;
+  }
+}
+
+/* Product Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+
+.modal-container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  margin: 1.5rem;
+  overflow-y: auto;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1001;
+}
+
+.modal.is-open .modal-container {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: var(--color-text);
+  transition: background 0.2s, color 0.2s;
+  box-shadow: var(--shadow);
+}
+
+.modal-close-btn:hover {
+  background: var(--color-text);
+  color: #fff;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    flex-direction: row;
+    height: 600px;
+    max-height: 80vh;
+  }
+}
+
+.modal-image-wrapper {
+  flex: 1;
+  background: #f1f2f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 300px;
+}
+
+.modal-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2rem;
+  transition: opacity 0.2s ease;
+}
+
+.modal-details {
+  flex: 0 0 400px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .modal-details {
+    flex: auto;
+    padding: 1.5rem;
+  }
+}
+
+.modal-header {
+  margin-bottom: 1rem;
+}
+
+.modal-category {
+  display: inline-block;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.modal-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin: 0 0 1.5rem;
+}
+
+.modal-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+  flex: 1;
+}
+
+.modal-actions {
+  margin-top: auto;
+}
+
+.modal-shop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: opacity 0.2s;
+  box-shadow: var(--shadow);
+}
+
+.modal-shop-btn:hover {
+  opacity: 0.95;
+  text-decoration: none;
+}
+
+/* Nav Buttons */
+.modal-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1002;
+  color: var(--color-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  opacity: 0;
+  /* Hidden by default until hovered or specialized logic */
+  visibility: hidden;
+}
+
+/* Show nav buttons on desktop when hovering modal container or always visible if outside */
+@media (min-width: 900px) {
+  .modal-nav-btn {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .modal-prev-btn {
+    left: 2rem;
+  }
+
+  .modal-next-btn {
+    right: 2rem;
+  }
+
+  /* Move them outside container if space permits, but for now inside relative container is tricky if we want them outside.
+     Actually, they are inside modal-container which is centered. Let's move them to fixed position or outside container.
+     Wait, HTML structure has them inside .modal-container.
+     To have them on the sides, they should arguably be outside .modal-container or absolute relative to screen.
+     Let's style them relative to .modal-container for now, or use fixed.
+     If inside .modal-container, they might overlap content.
+     Standard pattern: outside container on desktop, or overlay on edges.
+  */
+}
+
+/* Let's adjust nav button placement. If they are inside modal-container, they overlay content. */
+.modal-prev-btn {
+  left: 1rem;
+}
+
+.modal-next-btn {
+  right: 1rem;
+}
+
+.modal-nav-btn:hover {
+  background: var(--color-text);
+  color: #fff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.modal-nav-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Hide nav buttons on mobile (use swipe) */
+@media (max-width: 768px) {
+  .modal-nav-btn {
+    display: none;
   }
 }

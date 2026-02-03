@@ -53,7 +53,11 @@ const state = {
   loading: false,
   page: 0,
   hasMore: true,
-  searchTimeout: null
+  searchTimeout: null,
+  currentModalIndex: -1,
+  currentItemsList: [],
+  suggestions: [],
+  focusedSuggestionIndex: -1
 };
 
 // DOM elements
@@ -72,7 +76,8 @@ const elements = {
   loadMoreBtn: null,
   emptyState: null,
   loadingState: null,
-  errorState: null
+  errorState: null,
+  searchSuggestions: null
 };
 
 // Initialize page
@@ -104,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.emptyState = document.getElementById('empty-state');
   elements.loadingState = document.getElementById('loading-state');
   elements.errorState = document.getElementById('error-state');
+  elements.searchSuggestions = document.getElementById('search-suggestions');
   elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
 
   // Set up event listeners
@@ -132,16 +138,69 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function setupEventListeners() {
-  // Search input debounce
+  // Search input debounce and suggestions
   if (elements.searchInput) {
     elements.searchInput.addEventListener('input', function (e) {
+      var val = e.target.value;
+      state.searchQuery = val.trim();
+
+      // Show suggestions
+      updateSuggestions(val);
+
       clearTimeout(state.searchTimeout);
-      state.searchQuery = e.target.value.trim();
       state.searchTimeout = setTimeout(function () {
-        state.page = 0;
-        state.items = [];
-        loadItems();
+        if (state.searchQuery) {
+          state.isDefaultView = false;
+          setFiltersVisibility();
+          updateTrendingLabel();
+          state.page = 0;
+          state.items = [];
+          loadItems();
+        } else {
+          // If search cleared
+          if (!state.selectedRecipient) {
+            goBackToTrending();
+          } else {
+            updateTrendingLabel();
+            state.page = 0;
+            state.items = [];
+            loadItems();
+          }
+        }
       }, 300);
+    });
+
+    elements.searchInput.addEventListener('keydown', function (e) {
+      if (elements.searchSuggestions.style.display === 'none') return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        state.focusedSuggestionIndex = Math.min(state.focusedSuggestionIndex + 1, state.suggestions.length - 1);
+        renderSuggestions();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        state.focusedSuggestionIndex = Math.max(state.focusedSuggestionIndex - 1, -1);
+        renderSuggestions();
+      } else if (e.key === 'Enter') {
+        if (state.focusedSuggestionIndex >= 0) {
+          e.preventDefault();
+          selectSuggestion(state.suggestions[state.focusedSuggestionIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        closeSuggestions();
+      }
+    });
+
+    // Close suggestions on blur (with delay to allow clicking)
+    elements.searchInput.addEventListener('blur', function () {
+      setTimeout(closeSuggestions, 200);
+    });
+
+    // Re-show suggestions on focus if input not empty
+    elements.searchInput.addEventListener('focus', function () {
+      if (elements.searchInput.value) {
+        updateSuggestions(elements.searchInput.value);
+      }
     });
   }
 
@@ -302,6 +361,12 @@ function loadRecipients() {
 // Update the "Trending for…" label (use display label, e.g. "Boyfriend" not "boyfriend")
 function updateTrendingLabel() {
   if (!elements.trendingLabel) return;
+
+  if (state.searchQuery) {
+    elements.trendingLabel.textContent = 'Results for "' + state.searchQuery + '"';
+    return;
+  }
+
   if (state.isDefaultView || !state.selectedRecipient) {
     elements.trendingLabel.textContent = 'Trending for everyone';
     return;
@@ -358,6 +423,109 @@ function goBackToTrending() {
   setFiltersVisibility();
   loadClusters();
   loadDefaultView();
+}
+
+// Autocomplete logic
+function updateSuggestions(val) {
+  if (!val || !state.taxonomy) {
+    closeSuggestions();
+    return;
+  }
+
+  const query = val.toLowerCase().trim();
+  if (!query) {
+    closeSuggestions();
+    return;
+  }
+
+  // Extract all sub-clusters from taxonomy
+  const allSubClusters = [];
+  if (state.taxonomy.clusters) {
+    Object.values(state.taxonomy.clusters).forEach(cluster => {
+      if (cluster.sub_clusters) {
+        Object.values(cluster.sub_clusters).forEach(subCluster => {
+          allSubClusters.push(subCluster.label);
+        });
+      }
+    });
+  }
+
+  // Filter and sort: prefix matches first, then includes matches
+  const uniqueSubClusters = [...new Set(allSubClusters)];
+  const filtered = uniqueSubClusters.filter(label => label.toLowerCase().includes(query));
+
+  state.suggestions = filtered.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    const aStarts = aLower.startsWith(query);
+    const bStarts = bLower.startsWith(query);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+    return a.localeCompare(b);
+  }).slice(0, 8); // Limit to top 8 suggestions
+
+  if (state.suggestions.length > 0) {
+    state.focusedSuggestionIndex = -1;
+    renderSuggestions();
+  } else {
+    closeSuggestions();
+  }
+}
+
+function renderSuggestions() {
+  if (!elements.searchSuggestions) return;
+
+  if (state.suggestions.length === 0) {
+    closeSuggestions();
+    return;
+  }
+
+  elements.searchSuggestions.innerHTML = '';
+  state.suggestions.forEach((suggestion, index) => {
+    const div = document.createElement('div');
+    div.className = 'suggestion-item';
+    if (index === state.focusedSuggestionIndex) {
+      div.classList.add('is-focused');
+    }
+
+    // Add search icon
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'suggestion-item-icon';
+    iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+
+    div.appendChild(iconSpan);
+    div.appendChild(document.createTextNode(suggestion));
+
+    div.addEventListener('click', () => selectSuggestion(suggestion));
+    elements.searchSuggestions.appendChild(div);
+  });
+
+  elements.searchSuggestions.style.display = 'block';
+}
+
+function selectSuggestion(suggestion) {
+  if (elements.searchInput) {
+    elements.searchInput.value = suggestion;
+    state.searchQuery = suggestion;
+
+    // Trigger search
+    state.isDefaultView = false;
+    setFiltersVisibility();
+    updateTrendingLabel();
+    state.page = 0;
+    state.items = [];
+    loadItems();
+
+    closeSuggestions();
+  }
+}
+
+function closeSuggestions() {
+  if (elements.searchSuggestions) {
+    elements.searchSuggestions.style.display = 'none';
+    state.suggestions = [];
+    state.focusedSuggestionIndex = -1;
+  }
 }
 
 // Fetch top N items for one recipient (for default view)
@@ -502,11 +670,19 @@ function renderDefaultView() {
     elements.itemsContainer.appendChild(section);
 
     (function attachCarouselControls(carouselEl, gridEl, prevEl, nextEl) {
+      var isDragging = false;
+      var startX = 0;
+      var startScrollLeft = 0;
+      var lastX = 0;
+      var lastTime = 0;
+      var velocity = 0;
+      var RAF = null;
+
       var updateButtons = function () {
         var maxScroll = gridEl.scrollWidth - gridEl.clientWidth;
         var left = gridEl.scrollLeft;
-        prevEl.disabled = left <= 2;
-        nextEl.disabled = left >= maxScroll - 2;
+        prevEl.disabled = left <= 5;
+        nextEl.disabled = left >= maxScroll - 5;
         prevEl.classList.toggle('is-disabled', prevEl.disabled);
         nextEl.classList.toggle('is-disabled', nextEl.disabled);
       };
@@ -515,49 +691,182 @@ function renderDefaultView() {
         var card = gridEl.querySelector('.item-card');
         var cardWidth = card ? card.getBoundingClientRect().width : 280;
         var gap = parseFloat(getComputedStyle(gridEl).columnGap || getComputedStyle(gridEl).gap || 16);
+        // Scroll by 2 cards at a time for better UX
         var delta = (cardWidth + gap) * 2 * direction;
         gridEl.scrollBy({ left: delta, behavior: 'smooth' });
       };
 
-      prevEl.addEventListener('click', function () { scrollByAmount(-1); });
-      nextEl.addEventListener('click', function () { scrollByAmount(1); });
-      gridEl.addEventListener('scroll', function () { window.requestAnimationFrame(updateButtons); });
+      var momentumScroll = function () {
+        if (Math.abs(velocity) < 0.2 || isDragging) {
+          if (!isDragging) {
+            gridEl.classList.remove('is-dragging');
+            gridEl.style.scrollSnapType = ''; // Restore snap
+            updateButtons();
+          }
+          return;
+        }
+        gridEl.scrollLeft -= velocity;
+        velocity *= 0.95; // Friction
+        RAF = requestAnimationFrame(momentumScroll);
+      };
 
-      var isDragging = false;
-      var startX = 0;
-      var startScrollLeft = 0;
+      prevEl.addEventListener('click', function () {
+        cancelAnimationFrame(RAF);
+        scrollByAmount(-1);
+      });
+      nextEl.addEventListener('click', function () {
+        cancelAnimationFrame(RAF);
+        scrollByAmount(1);
+      });
+
+      gridEl.addEventListener('scroll', function () {
+        if (!isDragging && !RAF) {
+          window.requestAnimationFrame(updateButtons);
+        }
+      }, { passive: true });
 
       var onPointerDown = function (e) {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         isDragging = true;
         startX = e.clientX;
+        lastX = e.clientX;
         startScrollLeft = gridEl.scrollLeft;
+        lastTime = performance.now();
+        velocity = 0;
+
+        cancelAnimationFrame(RAF);
+        RAF = null;
+
         gridEl.classList.add('is-dragging');
+        gridEl.style.scrollSnapType = 'none'; // Disable snap during drag
+        gridEl.style.scrollBehavior = 'auto'; // Disable smooth scroll during drag
+
         try { gridEl.setPointerCapture(e.pointerId); } catch (err) { }
       };
 
       var onPointerMove = function (e) {
         if (!isDragging) return;
+        var now = performance.now();
+        var dt = now - lastTime;
+        if (dt > 0) {
+          var dx = e.clientX - lastX;
+          // Calculate velocity (pixels per frame roughly)
+          // We use a weighted average for smoother momentum
+          velocity = (dx * 0.8) + (velocity * 0.2);
+          lastX = e.clientX;
+          lastTime = now;
+        }
         var delta = e.clientX - startX;
         gridEl.scrollLeft = startScrollLeft - delta;
       };
 
-      var endDrag = function () {
+      var onPointerUp = function (e) {
         if (!isDragging) return;
         isDragging = false;
-        gridEl.classList.remove('is-dragging');
+
+        // Restore scroll behavior
+        gridEl.style.scrollBehavior = '';
+
+        // Prevent click if we moved more than 10px
+        var totalDelta = Math.abs(e.clientX - startX);
+        if (totalDelta > 10) {
+          gridEl.classList.add('prevent-click');
+          // Short timeout to allow click event to be swallowed
+          setTimeout(function () {
+            gridEl.classList.remove('prevent-click');
+          }, 50);
+        }
+
+        // Apply momentum if velocity is significant
+        if (Math.abs(velocity) > 2) {
+          RAF = requestAnimationFrame(momentumScroll);
+        } else {
+          gridEl.classList.remove('is-dragging');
+          gridEl.style.scrollSnapType = ''; // Restore snap
+          updateButtons();
+        }
       };
 
       gridEl.addEventListener('pointerdown', onPointerDown);
       gridEl.addEventListener('pointermove', onPointerMove);
-      gridEl.addEventListener('pointerup', endDrag);
-      gridEl.addEventListener('pointerleave', endDrag);
-      gridEl.addEventListener('pointercancel', endDrag);
+      gridEl.addEventListener('pointerup', onPointerUp);
+      gridEl.addEventListener('pointerleave', onPointerUp);
+      gridEl.addEventListener('pointercancel', onPointerUp);
 
-      window.requestAnimationFrame(updateButtons);
+      updateButtons();
     })(carousel, grid, prevBtn, nextBtn);
   });
   if (elements.loadMoreBtn) elements.loadMoreBtn.style.display = 'none';
+}
+
+// Open modal for a specific item
+function openModal(item, list, index) {
+  state.currentItemsList = list;
+  state.currentModalIndex = index;
+  updateModalContent(item);
+
+  const modal = document.getElementById('product-modal');
+  modal.style.display = 'flex';
+  // Force reflow
+  modal.offsetHeight;
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+// Close modal
+function closeModal() {
+  const modal = document.getElementById('product-modal');
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
+  setTimeout(() => {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 300);
+}
+
+// Update modal content
+function updateModalContent(item) {
+  const giftItem = item.gift_items;
+  if (!giftItem) return;
+
+  const imageUrl = giftItem.image_url || (giftItem.images && giftItem.images[0]);
+  const title = giftItem.local_title || giftItem.title;
+  const description = giftItem.description || '';
+  const category = item.category || item.sub_cluster || item.cluster || '';
+
+  let priceText = '';
+  if (giftItem.price) {
+    priceText = giftItem.price;
+  } else if (giftItem.price_amount && giftItem.price_currency) {
+    priceText = new Intl.NumberFormat('en-CA', {
+      style: 'currency',
+      currency: giftItem.price_currency
+    }).format(giftItem.price_amount);
+  }
+
+  document.getElementById('modal-image').src = imageUrl || '';
+  document.getElementById('modal-category').textContent = category;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-price').textContent = priceText;
+  document.getElementById('modal-description').textContent = description;
+  document.getElementById('modal-shop-btn').href = giftItem.url;
+}
+
+// Show next item in modal
+function showNextItem() {
+  if (state.currentModalIndex < state.currentItemsList.length - 1) {
+    state.currentModalIndex++;
+    updateModalContent(state.currentItemsList[state.currentModalIndex]);
+  }
+}
+
+// Show previous item in modal
+function showPrevItem() {
+  if (state.currentModalIndex > 0) {
+    state.currentModalIndex--;
+    updateModalContent(state.currentItemsList[state.currentModalIndex]);
+  }
 }
 
 // Build one item card DOM element (shared by default view and search view)
@@ -580,10 +889,100 @@ function buildItemCard(item) {
   }
   var categoryLabel = item.category || item.sub_cluster || item.cluster || '';
   var card = document.createElement('div');
-  card.className = 'item-card';
-  card.innerHTML = '<div class="item-image"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.className = 'item-card item-card--animate';
+  card.innerHTML = '<a class="item-image" href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></a><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+
+  // click to open modal
+  card.addEventListener('click', function (e) {
+    // If the grid is in prevent-click mode (just finished a drag), ignore
+    if (card.closest('.items-grid').classList.contains('prevent-click')) {
+      return;
+    }
+    // Clicking the image or shop link should go to the product URL, not the preview modal
+    if (e.target.closest('a')) {
+      return;
+    }
+
+    // Determine which list this item belongs to
+    // If in default view, we need to find the recipient list
+    let list = state.items; // default for search view
+    let index = -1;
+
+    if (state.isDefaultView) {
+      // Find the recipient this item looks like it belongs to.
+      // Since item objects are distinct, we can search by ID in all lists
+      const recipients = Object.keys(state.defaultViewItems);
+      for (let r of recipients) {
+        const foundIndex = state.defaultViewItems[r].indexOf(item);
+        if (foundIndex !== -1) {
+          list = state.defaultViewItems[r];
+          index = foundIndex;
+          break;
+        }
+      }
+    } else {
+      index = state.items.indexOf(item);
+    }
+
+    if (index !== -1) {
+      openModal(item, list, index);
+    }
+  });
+
   return card;
 }
+
+// Initialize Modal Events
+document.addEventListener('DOMContentLoaded', function () {
+  const modal = document.getElementById('product-modal');
+  if (!modal) return;
+
+  const closeBtn = modal.querySelector('.modal-close-btn');
+  const prevBtn = modal.querySelector('.modal-prev-btn');
+  const nextBtn = modal.querySelector('.modal-next-btn');
+  const overlay = modal.querySelector('.modal-overlay');
+
+  function handleClose() { closeModal(); }
+
+  closeBtn.addEventListener('click', handleClose);
+  overlay.addEventListener('click', handleClose);
+
+  // Keyboard nav
+  document.addEventListener('keydown', function (e) {
+    if (!modal.classList.contains('is-open')) return;
+    if (e.key === 'Escape') handleClose();
+    if (e.key === 'ArrowLeft') showPrevItem();
+    if (e.key === 'ArrowRight') showNextItem();
+  });
+
+  // Arrow buttons
+  prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrevItem(); });
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNextItem(); });
+
+  // Swipe support for mobile
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  modal.addEventListener('touchstart', function (e) {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  modal.addEventListener('touchend', function (e) {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const swipeThreshold = 50;
+    if (touchEndX < touchStartX - swipeThreshold) {
+      showNextItem(); // Swipe Left -> Next
+    }
+    if (touchEndX > touchStartX + swipeThreshold) {
+      showPrevItem(); // Swipe Right -> Prev
+    }
+  }
+});
+
 
 // Load Topic (cluster) options from taxonomy
 function loadClusters() {
@@ -693,9 +1092,20 @@ function renderCategorySelect() {
 
 // Load items with filters (search view only)
 async function loadItems() {
-  if (state.isDefaultView || !state.selectedRecipient) {
-    hideLoading();
-    return;
+  if ((state.isDefaultView && !state.searchQuery) || (!state.selectedRecipient && !state.searchQuery)) {
+    // If default view and no search, OR no recipient and no search: do nothing (stay in default view or empty)
+    // Actually, if !selectedRecipient and !state.isDefaultView and !searchQuery -> this is an odd state, likely transition.
+    // But relying on goBackToTrending for the clear case.
+    if (state.isDefaultView) {
+      hideLoading();
+      return;
+    }
+    // If not default view but no recipient and no search, we might want to load global allowed items? 
+    // For now proceed if query exists or recipient exists.
+    if (!state.selectedRecipient && !state.searchQuery) {
+      hideLoading();
+      return;
+    }
   }
 
   try {
@@ -736,10 +1146,14 @@ async function loadItems() {
           description
         )
       `)
-      .eq('recipient', state.selectedRecipient)
       .order('current_score', { ascending: false })
       .order('created_at', { ascending: false })
       .range(startIndex, startIndex + PAGE_SIZE - 1);
+
+    // Apply recipient filter if selected
+    if (state.selectedRecipient) {
+      query = query.eq('recipient', state.selectedRecipient);
+    }
 
     // Apply filters
     if (state.selectedCluster) {
