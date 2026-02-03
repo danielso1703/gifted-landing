@@ -1424,13 +1424,16 @@ async function loadItems() {
       return true;
     });
 
+    let itemsToRender = [];
     if (startPage === 0) {
       state.items = filteredData;
+      itemsToRender = filteredData;
     } else {
       // Avoid duplicates with already loaded items
       const existingIds = new Set(state.items.map(item => item.gift_item_id || item.gift_items.id));
       const newItems = filteredData.filter(item => !existingIds.has(item.gift_item_id || item.gift_items.id));
       state.items = state.items.concat(newItems);
+      itemsToRender = newItems;
     }
 
     // Determine hasMore based on raw data length
@@ -1438,11 +1441,7 @@ async function loadItems() {
     state.hasMore = rawCount === PAGE_SIZE;
     state.page = startPage + 1;
 
-    if (startPage === 0) {
-      renderItems(filteredData, true);
-    } else {
-      renderItems(newItems, false);
-    }
+    renderItems(itemsToRender, startPage === 0);
 
     if (state.items.length === 0) {
       showEmptyState();
