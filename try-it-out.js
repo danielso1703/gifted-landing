@@ -459,7 +459,7 @@ function goBackToTrending() {
 
 // Autocomplete logic
 function updateSuggestions(val) {
-  if (!val || !state.taxonomy) {
+  if (!val) {
     closeSuggestions();
     return;
   }
@@ -470,9 +470,11 @@ function updateSuggestions(val) {
     return;
   }
 
-  // Extract all sub-clusters from taxonomy
-  const allSubClusters = [];
-  if (state.taxonomy.clusters) {
+  const suggestions = [];
+
+  // Extract all sub-clusters from taxonomy if available
+  if (state.taxonomy && state.taxonomy.clusters) {
+    const allSubClusters = [];
     Object.values(state.taxonomy.clusters).forEach(cluster => {
       if (cluster.sub_clusters) {
         Object.values(cluster.sub_clusters).forEach(subCluster => {
@@ -480,21 +482,30 @@ function updateSuggestions(val) {
         });
       }
     });
+
+    // Filter and sort
+    const uniqueSubClusters = [...new Set(allSubClusters)];
+    const filtered = uniqueSubClusters.filter(label => label.toLowerCase().includes(query));
+
+    const sorted = filtered.sort((a, b) => {
+      const aLower = a.toLowerCase();
+      const bLower = b.toLowerCase();
+      const aStarts = aLower.startsWith(query);
+      const bStarts = bLower.startsWith(query);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return a.localeCompare(b);
+    }).slice(0, 6); // Limit category suggestions
+
+    sorted.forEach(s => {
+      suggestions.push({ type: 'category', value: s, label: s });
+    });
   }
 
-  // Filter and sort: prefix matches first, then includes matches
-  const uniqueSubClusters = [...new Set(allSubClusters)];
-  const filtered = uniqueSubClusters.filter(label => label.toLowerCase().includes(query));
+  // Always add specific search option
+  suggestions.push({ type: 'search', value: val.trim(), label: `Search for "${val.trim()}"` });
 
-  state.suggestions = filtered.sort((a, b) => {
-    const aLower = a.toLowerCase();
-    const bLower = b.toLowerCase();
-    const aStarts = aLower.startsWith(query);
-    const bStarts = bLower.startsWith(query);
-    if (aStarts && !bStarts) return -1;
-    if (!aStarts && bStarts) return 1;
-    return a.localeCompare(b);
-  }).slice(0, 8); // Limit to top 8 suggestions
+  state.suggestions = suggestions;
 
   if (state.suggestions.length > 0) {
     state.focusedSuggestionIndex = -1;
@@ -520,13 +531,24 @@ function renderSuggestions() {
       div.classList.add('is-focused');
     }
 
-    // Add search icon
+    // Add icon based on type
     const iconSpan = document.createElement('span');
     iconSpan.className = 'suggestion-item-icon';
-    iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+
+    if (suggestion.type === 'category') {
+      // Tag/Category icon
+      iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>';
+    } else {
+      // Search icon
+      iconSpan.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+    }
 
     div.appendChild(iconSpan);
-    div.appendChild(document.createTextNode(suggestion));
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = suggestion.label;
+    if (suggestion.type === 'search') textSpan.style.fontStyle = 'italic';
+    div.appendChild(textSpan);
 
     div.addEventListener('click', () => selectSuggestion(suggestion));
     elements.searchSuggestions.appendChild(div);
@@ -536,9 +558,10 @@ function renderSuggestions() {
 }
 
 function selectSuggestion(suggestion) {
-  if (elements.searchInput) {
-    elements.searchInput.value = suggestion;
-    state.searchQuery = suggestion;
+  if (elements.searchInput && suggestion) {
+    const val = suggestion.value;
+    elements.searchInput.value = val;
+    state.searchQuery = val;
 
     // Trigger search
     state.isDefaultView = false;
@@ -860,6 +883,15 @@ function closeModal() {
   const modal = document.getElementById('product-modal');
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
+
+  // Pause video if playing
+  const video = document.getElementById('modal-video');
+  if (video) {
+    video.pause();
+    video.currentTime = 0;
+    video.src = '';
+  }
+
   setTimeout(() => {
     modal.style.display = 'none';
     document.body.style.overflow = '';
@@ -871,7 +903,28 @@ function updateModalContent(item) {
   const giftItem = item.gift_items;
   if (!giftItem) return;
 
-  const images = giftItem.images && giftItem.images.length > 0 ? giftItem.images : (giftItem.image_url ? [giftItem.image_url] : []);
+  // Parse images if it's a string (e.g. "['url']") or invalid format
+  let rawImages = giftItem.images;
+  if (typeof rawImages === 'string') {
+    try {
+      // Try JSON parse first
+      rawImages = JSON.parse(rawImages);
+    } catch (e) {
+      // If JSON fails, it might be single-quoted string "['url']" which is common in some exports
+      // We can try to replace single quotes with double quotes if safe, or just regex extract
+      try {
+        if (rawImages.startsWith("['") && rawImages.endsWith("']")) {
+          rawImages = rawImages.replace(/'/g, '"');
+          rawImages = JSON.parse(rawImages);
+        }
+      } catch (e2) {
+        itemsLog('warn', 'Failed to parse images string', rawImages);
+        rawImages = [];
+      }
+    }
+  }
+
+  const images = Array.isArray(rawImages) && rawImages.length > 0 ? rawImages : (giftItem.image_url ? [giftItem.image_url] : []);
   const imageUrl = images[state.currentImageIndex] || images[0];
   const title = giftItem.local_title || giftItem.title;
   const description = giftItem.description || '';
@@ -887,7 +940,54 @@ function updateModalContent(item) {
     }).format(giftItem.price_amount);
   }
 
-  document.getElementById('modal-image').src = imageUrl || '';
+  const modalImage = document.getElementById('modal-image');
+  const modalVideo = document.getElementById('modal-video');
+
+  // Detect if it is a video (handle query strings)
+  const isVideo = /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(imageUrl);
+
+  if (isVideo) {
+    if (modalImage) modalImage.style.display = 'none';
+    if (modalVideo) {
+      modalVideo.style.display = 'block';
+      modalVideo.src = imageUrl;
+      modalVideo.load();
+      // Try to play (autoplay is set but good to Force it)
+      var playPromise = modalVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // Auto-play was prevented
+          console.log('Auto-play prevented:', error);
+        });
+      }
+    }
+  } else {
+    if (modalVideo) {
+      modalVideo.style.display = 'none';
+      modalVideo.pause();
+      modalVideo.src = '';
+    }
+    if (modalImage) {
+      modalImage.style.display = 'block';
+      modalImage.src = imageUrl || '';
+
+      // Error handling / Fallback
+      modalImage.onerror = function () {
+        // If we are showing a gallery image and it fails, try the main image_url (if different)
+        // Check if we are already using the fallback to avoid infinite loop
+        if (this.src !== giftItem.image_url && giftItem.image_url) {
+          itemsLog('warn', 'Gallery image failed, falling back to main image', { failed: this.src, fallback: giftItem.image_url });
+          this.src = giftItem.image_url;
+        } else {
+          // If fallback also fails or was same, show placeholder
+          itemsLog('warn', 'Image failed to load', { src: this.src });
+          this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23E6E8EF" width="200" height="200"/%3E%3Ctext fill="%23707487" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+          this.onerror = null; // Prevent infinite loop
+        }
+      };
+    }
+  }
+
   document.getElementById('modal-category').textContent = category;
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-price').textContent = priceText;
@@ -913,7 +1013,6 @@ function updateModalContent(item) {
 
   // Update pagination dots and image cursor
   const paginationContainer = document.getElementById('image-pagination');
-  const modalImage = document.getElementById('modal-image');
 
   // Reset
   if (paginationContainer) paginationContainer.innerHTML = '';
@@ -1241,7 +1340,7 @@ async function loadItems() {
       .from('gift_scores')
       .select(`
         *,
-        gift_items (
+        gift_items!inner (
           id,
           title,
           local_title,
@@ -1275,24 +1374,41 @@ async function loadItems() {
       query = query.eq('category', state.selectedCategory);
     }
 
+    // Apply search execution server-side
+    if (state.searchQuery) {
+      // Sanitize query for PostgREST syntax (remove commas, parens which define syntax)
+      const safeQuery = state.searchQuery.replace(/[,()]/g, ' ').trim();
+      if (safeQuery) {
+        // Search in title, local_title, and description
+        // valid syntax: column.ilike.%value%
+        query = query.or(`local_title.ilike.%${safeQuery}%,title.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`, { foreignTable: 'gift_items' });
+      }
+    }
+
     const { data, error } = await query;
 
     if (error) throw error;
 
-    // Filter by search query if present
+    // Data is already filtered by search query from server
     let filteredData = Array.isArray(data) ? data : [];
-    if (state.searchQuery) {
-      const searchLower = state.searchQuery.toLowerCase();
-      filteredData = filteredData.filter(function (item) {
-        const giftItem = item.gift_items;
-        if (!giftItem) return false;
 
-        const title = (giftItem.local_title || giftItem.title || '').toLowerCase();
-        const description = (giftItem.description || '').toLowerCase();
-
-        return title.includes(searchLower) || description.includes(searchLower);
-      });
-    }
+    // Normalize images: ensure gift_items.images is an array
+    filteredData.forEach(function (item) {
+      if (item.gift_items && typeof item.gift_items.images === 'string') {
+        try {
+          // Attempt JSON parse
+          let raw = item.gift_items.images;
+          // Handle python/postgres style ['...'] which is valid JSON if quotes are double, but here might be single
+          if (raw.startsWith("['") && raw.endsWith("']")) {
+            raw = raw.replace(/'/g, '"');
+          }
+          item.gift_items.images = JSON.parse(raw);
+        } catch (e) {
+          // If parse fails, assume empty or invalid
+          item.gift_items.images = [];
+        }
+      }
+    });
 
     // Filter out items without gift_items
     filteredData = filteredData.filter(function (item) {
@@ -1322,7 +1438,11 @@ async function loadItems() {
     state.hasMore = rawCount === PAGE_SIZE;
     state.page = startPage + 1;
 
-    renderItems(startPage === 0);
+    if (startPage === 0) {
+      renderItems(filteredData, true);
+    } else {
+      renderItems(newItems, false);
+    }
 
     if (state.items.length === 0) {
       showEmptyState();
@@ -1353,10 +1473,9 @@ function loadMoreItems() {
 }
 
 // Render items grid (search view: single grid with load more)
-function renderItems(isFirstLoad) {
+function renderItems(itemsToRender, isFirstLoad) {
   if (!elements.itemsContainer) return;
 
-  var itemsToRender = isFirstLoad ? state.items : state.items.slice(-PAGE_SIZE);
   var grid;
 
   if (isFirstLoad) {
