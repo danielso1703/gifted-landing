@@ -65,7 +65,6 @@ const elements = {
   createGender: null,
   trendingLabel: null,
   searchInput: null,
-  clearSearchBtn: null,
   clusterSelect: null,
   subClusterSelect: null,
   categorySelect: null,
@@ -97,7 +96,6 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.createGender = document.getElementById('create-gender');
   elements.trendingLabel = document.getElementById('trending-label');
   elements.searchInput = document.getElementById('search-input');
-  elements.clearSearchBtn = document.getElementById('clear-search-btn');
   elements.clusterSelect = document.getElementById('cluster-select');
   elements.subClusterSelect = document.getElementById('sub-cluster-select');
   elements.categorySelect = document.getElementById('category-select');
@@ -106,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.emptyState = document.getElementById('empty-state');
   elements.loadingState = document.getElementById('loading-state');
   elements.errorState = document.getElementById('error-state');
+  elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
 
   // Set up event listeners
   setupEventListeners();
@@ -138,29 +137,11 @@ function setupEventListeners() {
     elements.searchInput.addEventListener('input', function (e) {
       clearTimeout(state.searchTimeout);
       state.searchQuery = e.target.value.trim();
-
-      // Toggle clear button
-      if (elements.clearSearchBtn) {
-        elements.clearSearchBtn.style.display = state.searchQuery ? '' : 'none';
-      }
-
       state.searchTimeout = setTimeout(function () {
         state.page = 0;
         state.items = [];
         loadItems();
       }, 300);
-    });
-  }
-
-  // Clear search button
-  if (elements.clearSearchBtn) {
-    elements.clearSearchBtn.addEventListener('click', function () {
-      if (elements.searchInput) {
-        elements.searchInput.value = '';
-        // Trigger input event to update state/UI or do it manually
-        elements.searchInput.dispatchEvent(new Event('input'));
-        elements.searchInput.focus();
-      }
     });
   }
 
@@ -270,6 +251,13 @@ function setupEventListeners() {
       goBackToTrending();
     });
   }
+
+  // Clear filters button: same behavior as Back to trending (resets everything)
+  if (elements.clearFiltersBtn) {
+    elements.clearFiltersBtn.addEventListener('click', function () {
+      goBackToTrending();
+    });
+  }
 }
 
 // Fixed recipient options (value sent to API; display is capitalized)
@@ -357,10 +345,7 @@ function goBackToTrending() {
   state.searchQuery = '';
   state.items = [];
   state.page = 0;
-  if (elements.searchInput) {
-    elements.searchInput.value = '';
-    if (elements.clearSearchBtn) elements.clearSearchBtn.style.display = 'none';
-  }
+  if (elements.searchInput) elements.searchInput.value = '';
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
@@ -537,6 +522,37 @@ function renderDefaultView() {
       prevEl.addEventListener('click', function () { scrollByAmount(-1); });
       nextEl.addEventListener('click', function () { scrollByAmount(1); });
       gridEl.addEventListener('scroll', function () { window.requestAnimationFrame(updateButtons); });
+
+      var isDragging = false;
+      var startX = 0;
+      var startScrollLeft = 0;
+
+      var onPointerDown = function (e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        isDragging = true;
+        startX = e.clientX;
+        startScrollLeft = gridEl.scrollLeft;
+        gridEl.classList.add('is-dragging');
+        try { gridEl.setPointerCapture(e.pointerId); } catch (err) { }
+      };
+
+      var onPointerMove = function (e) {
+        if (!isDragging) return;
+        var delta = e.clientX - startX;
+        gridEl.scrollLeft = startScrollLeft - delta;
+      };
+
+      var endDrag = function () {
+        if (!isDragging) return;
+        isDragging = false;
+        gridEl.classList.remove('is-dragging');
+      };
+
+      gridEl.addEventListener('pointerdown', onPointerDown);
+      gridEl.addEventListener('pointermove', onPointerMove);
+      gridEl.addEventListener('pointerup', endDrag);
+      gridEl.addEventListener('pointerleave', endDrag);
+      gridEl.addEventListener('pointercancel', endDrag);
 
       window.requestAnimationFrame(updateButtons);
     })(carousel, grid, prevBtn, nextBtn);
