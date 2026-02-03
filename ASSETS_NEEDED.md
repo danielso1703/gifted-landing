@@ -1,4 +1,4 @@
-# Assets Needed for Gifted Landing Page
+# Assets Needed for Top Notch Gifts Landing Page
 
 Exact filenames, recommended dimensions, and what each asset should show. Add these to the `assets/` folder so the landing page displays them correctly.
 

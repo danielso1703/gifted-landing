@@ -1,6 +1,6 @@
 # gifted-landing
 
-Static public landing page for **Gifted** — for Rakuten Advertising / Walmart Canada affiliate partnership review. HTML and CSS only; no frameworks or build step.
+Static public landing page for **Top Notch Gifts** — for Rakuten Advertising / Walmart Canada affiliate partnership review. HTML and CSS only; no frameworks or build step.
 
 ## Contents
 
@@ -46,13 +46,13 @@ Static public landing page for **Gifted** — for Rakuten Advertising / Walmart 
 
 ## Contact and legal
 
-- Support: **support@giftedapp.io**
-- Privacy: **privacy@giftedapp.io**
-- Legal: **legal@giftedapp.io**
-- Website: **https://www.giftedapp.io**
+- Support: **team@topnotchgifts.ca**
+- Privacy: **team@topnotchgifts.ca**
+- Legal: **team@topnotchgifts.ca**
+- Website: **https://www.topnotchgifts.ca**
 
 ---
 
 ## Repo discovery summary (reference)
 
-The public product name is **Gifted**. One-sentence pitch and About copy are in the monolith `GiftGiverApp/src/screens/AboutScreen.tsx`. Brand colors: `#e60232`, gradient `#ff003d` → `#e60232`, `#00A8E1`, `#FF9900`. Logo/icon paths under `GiftGiverApp/assets/`. Full discovery is in **DISCOVERY_REPORT.md**; inputs for the landing page were also taken from the monolith’s `docs/LANDING_PAGE_INPUTS_REPORT.md`.
+The public product name is **Top Notch Gifts**. One-sentence pitch and About copy are in the monolith `GiftGiverApp/src/screens/AboutScreen.tsx`. Brand colors: `#e60232`, gradient `#ff003d` → `#e60232`, `#00A8E1`, `#FF9900`. Logo/icon paths under `GiftGiverApp/assets/`. Full discovery is in **DISCOVERY_REPORT.md**; inputs for the landing page were also taken from the monolith’s `docs/LANDING_PAGE_INPUTS_REPORT.md`.

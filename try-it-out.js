@@ -117,9 +117,9 @@ document.addEventListener('DOMContentLoaded', function () {
   setupEventListeners();
 
   // Use taxonomy from script (works with file://) or fallback to fetch (works with http/https)
-  if (typeof window.GIFTED_TAXONOMY !== 'undefined') {
-    state.taxonomy = window.GIFTED_TAXONOMY;
-    itemsLog('info', 'Taxonomy loaded from GIFTED_TAXONOMY');
+  if (typeof window.TOP_NOTCH_GIFTS_TAXONOMY !== 'undefined') {
+    state.taxonomy = window.TOP_NOTCH_GIFTS_TAXONOMY;
+    itemsLog('info', 'Taxonomy loaded from TOP_NOTCH_GIFTS_TAXONOMY');
     loadRecipients();
   } else {
     itemsLog('info', 'Loading taxonomy…');
