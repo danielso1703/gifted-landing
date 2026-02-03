@@ -31,6 +31,8 @@ function initSupabase() {
   return true;
 }
 
+const PAGE_SIZE = 24;
+
 // State management
 const state = {
   taxonomy: null,
@@ -49,7 +51,7 @@ const state = {
   searchQuery: '',
   items: [],
   loading: false,
-  offset: 0,
+  page: 0,
   hasMore: true,
   searchTimeout: null
 };
@@ -74,7 +76,7 @@ const elements = {
 };
 
 // Initialize page
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   // Check if Supabase library is loaded
   if (typeof window.supabase === 'undefined') {
     showError('Supabase library not loaded. Please check your script tags.');
@@ -114,13 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     itemsLog('info', 'Loading taxonomy…');
     fetch('items_database/taxonomy.json')
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
         state.taxonomy = data;
         itemsLog('info', 'Taxonomy loaded from taxonomy.json');
         loadRecipients();
       })
-      .catch(function(err) {
+      .catch(function (err) {
         itemsLog('error', 'Error loading taxonomy:', err);
         state.taxonomy = { clusters: {} };
         loadRecipients();
@@ -131,11 +133,11 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupEventListeners() {
   // Search input debounce
   if (elements.searchInput) {
-    elements.searchInput.addEventListener('input', function(e) {
+    elements.searchInput.addEventListener('input', function (e) {
       clearTimeout(state.searchTimeout);
       state.searchQuery = e.target.value.trim();
-      state.searchTimeout = setTimeout(function() {
-        state.offset = 0;
+      state.searchTimeout = setTimeout(function () {
+        state.page = 0;
         state.items = [];
         loadItems();
       }, 300);
@@ -144,11 +146,11 @@ function setupEventListeners() {
 
   // Filter selects
   if (elements.clusterSelect) {
-    elements.clusterSelect.addEventListener('change', function(e) {
+    elements.clusterSelect.addEventListener('change', function (e) {
       state.selectedCluster = e.target.value || null;
       state.selectedSubCluster = null;
       state.selectedCategory = null;
-      state.offset = 0;
+      state.page = 0;
       state.items = [];
       updateSubClusters();
       updateCategories();
@@ -157,10 +159,10 @@ function setupEventListeners() {
   }
 
   if (elements.subClusterSelect) {
-    elements.subClusterSelect.addEventListener('change', function(e) {
+    elements.subClusterSelect.addEventListener('change', function (e) {
       state.selectedSubCluster = e.target.value || null;
       state.selectedCategory = null;
-      state.offset = 0;
+      state.page = 0;
       state.items = [];
       updateCategories();
       loadItems();
@@ -168,9 +170,9 @@ function setupEventListeners() {
   }
 
   if (elements.categorySelect) {
-    elements.categorySelect.addEventListener('change', function(e) {
+    elements.categorySelect.addEventListener('change', function (e) {
       state.selectedCategory = e.target.value || null;
-      state.offset = 0;
+      state.page = 0;
       state.items = [];
       loadItems();
     });
@@ -178,18 +180,18 @@ function setupEventListeners() {
 
   // Load more button
   if (elements.loadMoreBtn) {
-    elements.loadMoreBtn.addEventListener('click', function() {
+    elements.loadMoreBtn.addEventListener('click', function () {
       loadMoreItems();
     });
   }
 
   // Who filters: selecting recipient switches to search view and loads; clearing recipient clears grid
   if (elements.createRecipient) {
-    elements.createRecipient.addEventListener('change', function() {
+    elements.createRecipient.addEventListener('change', function () {
       syncWhoFromFilters();
       if (state.selectedRecipient) {
         state.isDefaultView = false;
-        state.offset = 0;
+        state.page = 0;
         state.items = [];
         updateTrendingLabel();
         setFiltersVisibility();
@@ -210,7 +212,7 @@ function setupEventListeners() {
     });
   }
   if (elements.createAge) {
-    elements.createAge.addEventListener('change', function() {
+    elements.createAge.addEventListener('change', function () {
       syncWhoFromFilters();
       if (state.selectedRecipient) {
         if (state.isDefaultView) {
@@ -219,14 +221,14 @@ function setupEventListeners() {
           setFiltersVisibility();
           loadClusters();
         }
-        state.offset = 0;
+        state.page = 0;
         state.items = [];
         loadItems();
       }
     });
   }
   if (elements.createGender) {
-    elements.createGender.addEventListener('change', function() {
+    elements.createGender.addEventListener('change', function () {
       syncWhoFromFilters();
       if (state.selectedRecipient) {
         if (state.isDefaultView) {
@@ -235,7 +237,7 @@ function setupEventListeners() {
           setFiltersVisibility();
           loadClusters();
         }
-        state.offset = 0;
+        state.page = 0;
         state.items = [];
         loadItems();
       }
@@ -244,7 +246,7 @@ function setupEventListeners() {
 
   // Back to trending: return to default view
   if (elements.backToTrendingBtn) {
-    elements.backToTrendingBtn.addEventListener('click', function() {
+    elements.backToTrendingBtn.addEventListener('click', function () {
       goBackToTrending();
     });
   }
@@ -263,11 +265,11 @@ var RECIPIENT_OPTIONS = [
 
 // Load recipients from fixed list; default view = trending per recipient
 function loadRecipients() {
-  state.recipients = RECIPIENT_OPTIONS.map(function(r) { return r.value; });
+  state.recipients = RECIPIENT_OPTIONS.map(function (r) { return r.value; });
 
   if (elements.createRecipient) {
     elements.createRecipient.innerHTML = '<option value="">Select recipient</option>';
-    RECIPIENT_OPTIONS.forEach(function(r) {
+    RECIPIENT_OPTIONS.forEach(function (r) {
       const option = document.createElement('option');
       option.value = r.value;
       option.textContent = r.label;
@@ -296,7 +298,7 @@ function updateTrendingLabel() {
     elements.trendingLabel.textContent = 'Trending for everyone';
     return;
   }
-  var display = RECIPIENT_OPTIONS.find(function(r) { return r.value === state.selectedRecipient; });
+  var display = RECIPIENT_OPTIONS.find(function (r) { return r.value === state.selectedRecipient; });
   var name = display ? display.label : state.selectedRecipient;
   var label = 'Trending for ' + name;
   if (state.selectedAge) label += ' · ' + state.selectedAge;
@@ -311,13 +313,13 @@ function syncWhoFromFilters() {
   state.selectedGender = elements.createGender ? elements.createGender.value || null : null;
 }
 
-// Show Area only when Topic selected; show Category only when Area selected; filters always visible; sync Back to trending button
+// Show Area and Category when Topic selected; filters always visible; sync Back to trending button
 function setFiltersVisibility() {
   var areaGroup = document.getElementById('filter-group-area');
   var categoryGroup = document.getElementById('filter-group-category');
   if (elements.filtersSection) elements.filtersSection.style.display = '';
   if (areaGroup) areaGroup.style.display = state.selectedCluster ? '' : 'none';
-  if (categoryGroup) categoryGroup.style.display = state.selectedSubCluster ? '' : 'none';
+  if (categoryGroup) categoryGroup.style.display = state.selectedCluster ? '' : 'none';
   if (elements.backToTrendingBtn) {
     elements.backToTrendingBtn.style.display = state.isDefaultView ? 'none' : '';
   }
@@ -334,7 +336,7 @@ function goBackToTrending() {
   state.selectedCategory = null;
   state.searchQuery = '';
   state.items = [];
-  state.offset = 0;
+  state.page = 0;
   if (elements.searchInput) elements.searchInput.value = '';
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
@@ -376,12 +378,12 @@ function fetchItemsForRecipient(recipient, limit) {
     .order('current_score', { ascending: false })
     .order('created_at', { ascending: false })
     .range(0, limit - 1)
-    .then(function(res) {
+    .then(function (res) {
       if (res.error) {
         itemsLog('error', 'Fetch failed for recipient="' + recipient + '"', res.error);
         return [];
       }
-      var list = (res.data || []).filter(function(item) { return item.gift_items && item.gift_items.url; });
+      var list = (res.data || []).filter(function (item) { return item.gift_items && item.gift_items.url; });
       itemsLog('info', 'Fetched ' + list.length + ' items for recipient="' + recipient + '"');
       return list;
     });
@@ -393,16 +395,16 @@ function loadDefaultView() {
   itemsLog('info', 'Loading default view (trending per recipient)');
   showLoading();
   state.defaultViewItems = {};
-  var promises = RECIPIENT_OPTIONS.map(function(r) { return fetchItemsForRecipient(r.value, 8); });
-  Promise.all(promises).then(function(results) {
-    RECIPIENT_OPTIONS.forEach(function(r, i) {
+  var promises = RECIPIENT_OPTIONS.map(function (r) { return fetchItemsForRecipient(r.value, 8); });
+  Promise.all(promises).then(function (results) {
+    RECIPIENT_OPTIONS.forEach(function (r, i) {
       state.defaultViewItems[r.value] = results[i] || [];
     });
-    var counts = RECIPIENT_OPTIONS.map(function(r) { return r.value + ': ' + (state.defaultViewItems[r.value] || []).length; }).join(', ');
+    var counts = RECIPIENT_OPTIONS.map(function (r) { return r.value + ': ' + (state.defaultViewItems[r.value] || []).length; }).join(', ');
     itemsLog('info', 'Default view loaded', { perRecipient: counts });
     renderDefaultView();
     hideLoading();
-  }).catch(function(err) {
+  }).catch(function (err) {
     itemsLog('error', 'Error loading default view:', err);
     hideLoading();
   });
@@ -418,7 +420,7 @@ function openFeedForRecipient(recipientValue) {
   state.selectedSubCluster = null;
   state.selectedCategory = null;
   state.searchQuery = '';
-  state.offset = 0;
+  state.page = 0;
   state.items = [];
   if (elements.createRecipient) elements.createRecipient.value = recipientValue;
   if (elements.createAge) elements.createAge.value = '';
@@ -435,7 +437,7 @@ function renderDefaultView() {
   if (!elements.itemsContainer) return;
   elements.itemsContainer.innerHTML = '';
   elements.itemsContainer.className = 'trending-sections';
-  RECIPIENT_OPTIONS.forEach(function(r) {
+  RECIPIENT_OPTIONS.forEach(function (r) {
     var items = state.defaultViewItems[r.value] || [];
     if (items.length === 0) return;
     var section = document.createElement('div');
@@ -447,8 +449,8 @@ function renderDefaultView() {
     heading.textContent = 'Trending for ' + r.label;
     heading.setAttribute('tabindex', '0');
     heading.setAttribute('role', 'button');
-    heading.addEventListener('click', function() { openFeedForRecipient(r.value); });
-    heading.addEventListener('keydown', function(e) {
+    heading.addEventListener('click', function () { openFeedForRecipient(r.value); });
+    heading.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         openFeedForRecipient(r.value);
@@ -459,12 +461,12 @@ function renderDefaultView() {
     seeAllLink.type = 'button';
     seeAllLink.className = 'trending-section-see-all';
     seeAllLink.textContent = 'See all';
-    seeAllLink.addEventListener('click', function() { openFeedForRecipient(r.value); });
+    seeAllLink.addEventListener('click', function () { openFeedForRecipient(r.value); });
     header.appendChild(seeAllLink);
     section.appendChild(header);
     var grid = document.createElement('div');
     grid.className = 'items-grid';
-    items.forEach(function(item) {
+    items.forEach(function (item) {
       var card = buildItemCard(item);
       if (card) grid.appendChild(card);
     });
@@ -507,10 +509,10 @@ function loadClusters() {
     setFiltersVisibility();
     return;
   }
-  state.clusters = Object.keys(state.taxonomy.clusters).map(function(key) {
+  state.clusters = Object.keys(state.taxonomy.clusters).map(function (key) {
     const c = state.taxonomy.clusters[key];
-    return { key: key, label: (c && c.label) ? c.label : key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }) };
-  }).sort(function(a, b) { return a.label.localeCompare(b.label); });
+    return { key: key, label: (c && c.label) ? c.label : key.replace(/_/g, ' ').replace(/\b\w/g, function (l) { return l.toUpperCase(); }) };
+  }).sort(function (a, b) { return a.label.localeCompare(b.label); });
   renderClusterSelect();
   setFiltersVisibility();
 }
@@ -520,7 +522,7 @@ function renderClusterSelect() {
   if (!elements.clusterSelect) return;
 
   elements.clusterSelect.innerHTML = '<option value="">All Topics</option>';
-  state.clusters.forEach(function(c) {
+  state.clusters.forEach(function (c) {
     const option = document.createElement('option');
     option.value = c.key;
     option.textContent = c.label;
@@ -543,10 +545,10 @@ function updateSubClusters() {
     setFiltersVisibility();
     return;
   }
-  state.subClusters = Object.keys(subClustersObj).map(function(key) {
+  state.subClusters = Object.keys(subClustersObj).map(function (key) {
     const s = subClustersObj[key];
-    return { key: key, label: (s && s.label) ? s.label : key.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }) };
-  }).sort(function(a, b) { return a.label.localeCompare(b.label); });
+    return { key: key, label: (s && s.label) ? s.label : key.replace(/_/g, ' ').replace(/\b\w/g, function (l) { return l.toUpperCase(); }) };
+  }).sort(function (a, b) { return a.label.localeCompare(b.label); });
   renderSubClusterSelect();
   setFiltersVisibility();
 }
@@ -556,7 +558,7 @@ function renderSubClusterSelect() {
   if (!elements.subClusterSelect) return;
 
   elements.subClusterSelect.innerHTML = '<option value="">All Areas</option>';
-  state.subClusters.forEach(function(s) {
+  state.subClusters.forEach(function (s) {
     const option = document.createElement('option');
     option.value = s.key;
     option.textContent = s.label;
@@ -581,12 +583,12 @@ function updateCategories() {
   if (state.selectedSubCluster && subClustersObj[state.selectedSubCluster] && subClustersObj[state.selectedSubCluster].categories) {
     list = subClustersObj[state.selectedSubCluster].categories.slice();
   } else {
-    Object.keys(subClustersObj).forEach(function(key) {
+    Object.keys(subClustersObj).forEach(function (key) {
       const cats = subClustersObj[key].categories;
-      if (Array.isArray(cats)) cats.forEach(function(c) { if (list.indexOf(c) === -1) list.push(c); });
+      if (Array.isArray(cats)) cats.forEach(function (c) { if (list.indexOf(c) === -1) list.push(c); });
     });
   }
-  list.sort(function(a, b) { return a.localeCompare(b); });
+  list.sort(function (a, b) { return a.localeCompare(b); });
   state.categories = list;
   renderCategorySelect();
   setFiltersVisibility();
@@ -597,10 +599,10 @@ function renderCategorySelect() {
   if (!elements.categorySelect) return;
 
   elements.categorySelect.innerHTML = '<option value="">All Categories</option>';
-  state.categories.forEach(function(cat) {
+  state.categories.forEach(function (cat) {
     const option = document.createElement('option');
     option.value = cat;
-    option.textContent = cat.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+    option.textContent = cat.replace(/_/g, ' ').replace(/\b\w/g, function (l) { return l.toUpperCase(); });
     elements.categorySelect.appendChild(option);
   });
 }
@@ -613,6 +615,8 @@ async function loadItems() {
   }
 
   try {
+    var startPage = state.page;
+    var startIndex = startPage * PAGE_SIZE;
     state.loading = true;
     showLoading();
     hideError();
@@ -621,7 +625,8 @@ async function loadItems() {
     var startMs = Date.now();
     itemsLog('info', 'Loading items', {
       recipient: state.selectedRecipient,
-      offset: state.offset,
+      page: startPage,
+      startIndex: startIndex,
       cluster: state.selectedCluster || null,
       subCluster: state.selectedSubCluster || null,
       category: state.selectedCategory || null,
@@ -650,7 +655,7 @@ async function loadItems() {
       .eq('recipient', state.selectedRecipient)
       .order('current_score', { ascending: false })
       .order('created_at', { ascending: false })
-      .range(state.offset, state.offset + 23);
+      .range(startIndex, startIndex + PAGE_SIZE - 1);
 
     // Apply filters
     if (state.selectedCluster) {
@@ -668,46 +673,45 @@ async function loadItems() {
     if (error) throw error;
 
     // Filter by search query if present
-    let filteredData = data || [];
+    let filteredData = Array.isArray(data) ? data : [];
     if (state.searchQuery) {
       const searchLower = state.searchQuery.toLowerCase();
-      filteredData = filteredData.filter(function(item) {
+      filteredData = filteredData.filter(function (item) {
         const giftItem = item.gift_items;
         if (!giftItem) return false;
-        
+
         const title = (giftItem.local_title || giftItem.title || '').toLowerCase();
         const description = (giftItem.description || '').toLowerCase();
-        
+
         return title.includes(searchLower) || description.includes(searchLower);
       });
     }
 
     // Filter out items without gift_items
-    filteredData = filteredData.filter(function(item) {
+    filteredData = filteredData.filter(function (item) {
       return item.gift_items && item.gift_items.url;
     });
 
-    if (state.offset === 0) {
+    if (startPage === 0) {
       state.items = filteredData;
     } else {
       state.items = state.items.concat(filteredData);
     }
 
-    // Fix: determine hasMore based on raw data length
-    state.hasMore = data.length === 24;
-    // Fix: increment offset by the number of items fetched from DB, not the number of valid items
-    state.offset += data.length;
+    // Determine hasMore based on raw data length
+    var rawCount = Array.isArray(data) ? data.length : 0;
+    state.hasMore = rawCount === PAGE_SIZE;
+    state.page = startPage + 1;
 
-    renderItems();
-    updateLoadMoreButton();
+    renderItems(startPage === 0);
 
     if (state.items.length === 0) {
       showEmptyState();
     }
 
-    itemsLog('info', 'Loaded ' + filteredData.length + ' items (new offset=' + state.offset + ', hasMore=' + state.hasMore + ')', {
+    itemsLog('info', 'Loaded ' + filteredData.length + ' items (next page=' + state.page + ', hasMore=' + state.hasMore + ')', {
       count: filteredData.length,
-      offset: state.offset,
+      page: state.page,
       hasMore: state.hasMore,
       durationMs: Date.now() - startMs
     });
@@ -718,24 +722,25 @@ async function loadItems() {
     hideLoading();
   } finally {
     state.loading = false;
+    updateLoadMoreButton();
   }
 }
 
 // Load more items
 function loadMoreItems() {
   if (state.loading || !state.hasMore) return;
-  itemsLog('debug', 'Load more requested (current offset=' + state.offset + ')');
+  itemsLog('debug', 'Load more requested (next page=' + state.page + ')');
   loadItems();
 }
 
 // Render items grid (search view: single grid with load more)
-function renderItems() {
+function renderItems(isFirstLoad) {
   if (!elements.itemsContainer) return;
 
-  var itemsToRender = state.offset === 0 ? state.items : state.items.slice(-24);
+  var itemsToRender = isFirstLoad ? state.items : state.items.slice(-PAGE_SIZE);
   var grid;
 
-  if (state.offset === 0) {
+  if (isFirstLoad) {
     elements.itemsContainer.innerHTML = '';
     elements.itemsContainer.className = 'items-container-single';
     grid = document.createElement('div');
@@ -746,7 +751,7 @@ function renderItems() {
   }
 
   if (!grid) return;
-  itemsToRender.forEach(function(item) {
+  itemsToRender.forEach(function (item) {
     var card = buildItemCard(item);
     if (card) grid.appendChild(card);
   });
@@ -755,7 +760,7 @@ function renderItems() {
 // Update load more button
 function updateLoadMoreButton() {
   if (!elements.loadMoreBtn) return;
-  
+
   if (state.hasMore && state.items.length > 0) {
     elements.loadMoreBtn.style.display = 'block';
     elements.loadMoreBtn.disabled = state.loading;
@@ -786,7 +791,7 @@ function getSkeletonCardHtml() {
 
 // Show/hide loading state — skeleton grid in items container
 function showLoading() {
-  if (elements.itemsContainer && (state.isDefaultView || state.offset === 0)) {
+  if (elements.itemsContainer && (state.isDefaultView || state.page === 0)) {
     elements.itemsContainer.innerHTML = '';
     elements.itemsContainer.className = 'items-container-single';
     var grid = document.createElement('div');
