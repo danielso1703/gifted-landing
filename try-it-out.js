@@ -892,6 +892,14 @@ function buildItemCard(item) {
   card.className = 'item-card item-card--animate';
   card.innerHTML = '<a class="item-image" href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></a><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
+  // Ensure link clicks don't trigger the preview modal
+  var cardLinks = card.querySelectorAll('a');
+  cardLinks.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+  });
+
   // click to open modal
   card.addEventListener('click', function (e) {
     // If the grid is in prevent-click mode (just finished a drag), ignore
