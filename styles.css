@@ -613,7 +613,7 @@ section {
   padding: 2rem 1.5rem 4rem;
 }
 
-/* Narrow reading width for privacy/affiliate; try-it-out overrides below for wide layout */
+/* Narrow reading width for privacy/affiliate; find-gifts overrides below for wide layout */
 .page-main .container {
   max-width: 720px;
 }
@@ -650,7 +650,7 @@ section {
 }
 
 /* Try it out page — use full width on desktop for the content grid, but standard width for header/footer */
-.page-try-it-out .page-main .container {
+.page-find-gifts .page-main .container {
   max-width: min(1600px, 92vw);
 }
 
