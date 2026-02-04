@@ -141,6 +141,13 @@ a:hover {
   padding: 0 1.5rem;
 }
 
+@media (max-width: 767px) {
+  .container {
+    padding: 0 1rem;
+    max-width: 100%;
+  }
+}
+
 /* Header / Nav */
 .site-header {
   background: var(--color-surface);
@@ -901,8 +908,8 @@ section {
 
 .trending-section .items-grid--carousel {
   grid-auto-flow: column;
-  grid-auto-columns: calc(50% - 0.75rem);
-  /* Default mobile: 2 columns */
+  grid-auto-columns: calc(50% - 0.625rem);
+  /* Exactly 2 columns with 1.25rem gap */
   grid-template-columns: unset;
   overflow-x: auto;
   overflow-y: hidden;
@@ -1201,14 +1208,15 @@ section {
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+/* Responsive refinements */
+@media (max-width: 767px) {
   .site-header {
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 0;
   }
 
   .site-header .container {
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .logo-link {
@@ -1236,29 +1244,12 @@ section {
   }
 
   section {
-    padding: 3rem 1rem;
+    padding: 2.5rem 0;
   }
 
-  .steps {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
-  .step {
-    padding: 1.5rem 1.25rem;
-  }
-
-  .features-grid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
-  .feature-card {
-    padding: 1.5rem 1.25rem;
-  }
-
-  .filters-row {
-    grid-template-columns: 1fr;
+  .trending-label {
+    margin-bottom: 1.25rem;
+    font-size: 0.9375rem;
   }
 
   .items-grid {
@@ -1270,17 +1261,16 @@ section {
     gap: 0.5rem;
   }
 
-  .carousel-btn {
-    width: 2.125rem;
-    height: 2.125rem;
-    font-size: 1.25rem;
-  }
-
   .trending-section .items-grid--carousel {
     grid-auto-columns: calc(50% - 0.5rem);
+    /* Exactly 2 columns with 1rem gap */
     gap: 1rem;
     padding-left: 0;
     padding-right: 0;
+  }
+
+  .trending-section-title {
+    font-size: 1rem;
   }
 
   .item-content {
