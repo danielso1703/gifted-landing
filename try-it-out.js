@@ -784,6 +784,11 @@ function renderDefaultView() {
 
       var onPointerDown = function (e) {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        // On touch devices, we favor native scrolling for smoothness.
+        // We only initiate manual drag for mouse pointers.
+        if (e.pointerType === 'touch') return;
+
         isPointerDown = true;
         isDragging = false;
         startX = e.clientX;
@@ -798,6 +803,8 @@ function renderDefaultView() {
 
       var onPointerMove = function (e) {
         if (!isPointerDown) return;
+        if (e.pointerType === 'touch') return; // Let native touch handle it
+
         var delta = e.clientX - startX;
         if (!isDragging) {
           if (Math.abs(delta) < dragThreshold) return;

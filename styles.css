@@ -913,6 +913,9 @@ section {
   grid-template-columns: unset;
   overflow-x: auto;
   overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Momentum scrolling on iOS */
+  scroll-behavior: smooth;
   cursor: grab;
   touch-action: pan-y;
   scroll-snap-type: x mandatory;
@@ -935,6 +938,8 @@ section {
 
 .trending-section .items-grid--carousel .item-card {
   scroll-snap-align: start;
+  scroll-snap-stop: always;
+  /* Prevent skipping multiple items on swipe */
   min-width: 0;
 }
 
