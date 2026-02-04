@@ -863,6 +863,58 @@ function renderDefaultView() {
       gridEl.addEventListener('pointerleave', onPointerUp);
       gridEl.addEventListener('pointercancel', onPointerUp);
 
+      // Touch event handling for native scroll with swipe detection
+      // This prevents the modal from opening after a horizontal swipe
+      var touchStartX = 0;
+      var touchStartY = 0;
+      var touchSwipeThreshold = 10; // pixels to consider it a swipe vs tap
+      var preventClickTimeout = null;
+
+      gridEl.addEventListener('touchstart', function (e) {
+        if (e.touches.length !== 1) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        // Clear any pending timeout and remove prevent-click for fresh interaction
+        if (preventClickTimeout) {
+          clearTimeout(preventClickTimeout);
+          preventClickTimeout = null;
+        }
+        gridEl.classList.remove('prevent-click');
+      }, { passive: true });
+
+      gridEl.addEventListener('touchmove', function (e) {
+        if (e.touches.length !== 1) return;
+        var dx = Math.abs(e.touches[0].clientX - touchStartX);
+        var dy = Math.abs(e.touches[0].clientY - touchStartY);
+        // If horizontal movement exceeds threshold and is primarily horizontal,
+        // immediately add prevent-click to block any click that fires before touchend
+        if (dx > touchSwipeThreshold && dx > dy) {
+          if (!gridEl.classList.contains('prevent-click')) {
+            gridEl.classList.add('prevent-click');
+          }
+        }
+      }, { passive: true });
+
+      gridEl.addEventListener('touchend', function (e) {
+        // If prevent-click was set (meaning we swiped), keep it a bit longer
+        // to ensure the click event (which fires after touchend) is blocked
+        if (gridEl.classList.contains('prevent-click')) {
+          preventClickTimeout = setTimeout(function () {
+            gridEl.classList.remove('prevent-click');
+            preventClickTimeout = null;
+          }, 300);
+        }
+      }, { passive: true });
+
+      gridEl.addEventListener('touchcancel', function (e) {
+        // On cancel, clear the state
+        if (preventClickTimeout) {
+          clearTimeout(preventClickTimeout);
+          preventClickTimeout = null;
+        }
+        gridEl.classList.remove('prevent-click');
+      }, { passive: true });
+
       updateButtons();
     })(carousel, grid, prevBtn, nextBtn);
   });
