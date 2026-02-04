@@ -28,7 +28,17 @@
         <a href="affiliate-disclosure.html" class="active">Affiliate Disclosure</a>
         <a href="mailto:team@topnotchgifts.ca">Contact</a>
       </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">
+        <span></span>
+      </button>
     </div>
+    <nav class="mobile-nav" aria-hidden="true">
+      <a href="index.html">Home</a>
+      <a href="try-it-out.html">Find Gifts</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="affiliate-disclosure.html" class="active">Affiliate Disclosure</a>
+      <a href="mailto:team@topnotchgifts.ca">Contact</a>
+    </nav>
   </header>
 
   <main class="page-main">
@@ -59,6 +69,39 @@
       </p>
     </div>
   </footer>
+
+  <script>
+    // Mobile menu toggle
+    (function () {
+      var menuBtn = document.querySelector('.mobile-menu-btn');
+      var mobileNav = document.querySelector('.mobile-nav');
+      if (!menuBtn || !mobileNav) return;
+
+      function toggleMenu() {
+        var isOpen = mobileNav.classList.toggle('is-open');
+        menuBtn.classList.toggle('is-open', isOpen);
+        menuBtn.setAttribute('aria-expanded', isOpen);
+        mobileNav.setAttribute('aria-hidden', !isOpen);
+        document.body.classList.toggle('mobile-nav-open', isOpen);
+      }
+
+      menuBtn.addEventListener('click', toggleMenu);
+
+      mobileNav.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          if (mobileNav.classList.contains('is-open')) {
+            toggleMenu();
+          }
+        });
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) {
+          toggleMenu();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>
