@@ -29,6 +29,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (max-width: 640px) {
+  :root {
+    --section-padding: 2.25rem 1rem;
+  }
+}
+
 /* Scroll reveal */
 .reveal {
   opacity: 0;
@@ -205,6 +211,25 @@ a:hover {
   color: var(--color-accent);
 }
 
+@media (max-width: 640px) {
+  .site-header {
+    padding: 0.75rem 0;
+  }
+
+  .logo-link {
+    font-size: 1.1875rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    row-gap: 0.5rem;
+  }
+
+  .nav-links a {
+    font-size: 0.875rem;
+  }
+}
+
 /* Hero — single clear rhythm: small gaps between lines, one breath before CTA */
 .hero {
   padding: 3rem 1.5rem 3.5rem;
@@ -314,6 +339,36 @@ a:hover {
 .hero-testflight-link:hover {
   background: var(--color-accent-light);
   text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 2.25rem 1rem 2.75rem;
+  }
+
+  .hero-tagline {
+    margin-bottom: 0.75rem;
+  }
+
+  .hero h1 {
+    margin-bottom: 0.75rem;
+  }
+
+  .hero .pitch {
+    font-size: 1rem;
+    max-width: 22rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .hero-testflight-link {
+    width: min(22rem, 100%);
+    justify-content: center;
+  }
+
+  .hero-cta-logo {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 }
 
 /* Sections */
