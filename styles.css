@@ -649,9 +649,7 @@ section {
   margin-bottom: 1rem;
 }
 
-/* Try it out page — use full width on desktop, not the narrow mobile-safe column */
-.page-try-it-out .site-header .container,
-.page-try-it-out .footer-bottom,
+/* Try it out page — use full width on desktop for the content grid, but standard width for header/footer */
 .page-try-it-out .page-main .container {
   max-width: min(1600px, 92vw);
 }
