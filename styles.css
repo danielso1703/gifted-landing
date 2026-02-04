@@ -207,7 +207,8 @@ a:hover {
   font-size: 0.9375rem;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a.active {
   color: var(--color-accent);
 }
 
