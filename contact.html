@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contact Us — Top Notch Gifts</title>
+    <link rel="icon" type="image/png" href="Assets/best-large-fill-2.png">
+    <link rel="apple-touch-icon" href="Assets/best-large-fill-2.png">
+    <meta name="description" content="Contact the Top Notch Gifts team for support, feedback, or inquiries.">
+    <meta property="og:title" content="Contact Us — Top Notch Gifts">
+    <meta property="og:description" content="Contact the Top Notch Gifts team for support, feedback, or inquiries.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.topnotchgifts.ca/contact.html">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="page">
+    <header class="site-header">
+        <div class="container">
+            <a href="index.html" class="logo-link">
+                <img src="Assets/best-large-fill-2.png" alt="" class="logo-img">
+                <span>Top Notch Gifts</span>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="try-it-out.html">Find Gifts</a>
+                <a href="privacy.html">Privacy</a>
+                <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+                <a href="contact.html" class="active">Contact</a>
+            </nav>
+            <button class="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">
+                <span></span>
+            </button>
+        </div>
+        <nav class="mobile-nav" aria-hidden="true">
+            <a href="index.html">Home</a>
+            <a href="try-it-out.html">Find Gifts</a>
+            <a href="privacy.html">Privacy</a>
+            <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+            <a href="contact.html" class="active">Contact</a>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="container">
+            <h1>Contact Us</h1>
+            <p class="updated">We'd love to hear from you. Please fill out the form below to get in touch.</p>
+
+            <form id="contact-form" class="contact-form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Your Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="your@email.com"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <select id="subject" name="subject" class="form-control" required>
+                        <option value="" disabled selected>Select a subject</option>
+                        <option value="Join app beta">Join app beta</option>
+                        <option value="Support Request">Support Request</option>
+                        <option value="Feedback">Feedback</option>
+                        <option value="Partnership">Partnership</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" class="form-control" rows="6"
+                        placeholder="How can we help you?" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-grid container">
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="index.html#how-it-works">How it works</a></li>
+                    <li><a href="index.html#features">Features</a></li>
+                    <li><a href="try-it-out.html">Find Gifts</a></li>
+                    <li><a href="index.html#faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="affiliate-disclosure.html">Affiliate Disclosure</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <ul>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="mailto:team@topnotchgifts.ca">team@topnotchgifts.ca</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Top Notch Gifts — Gift search and discovery. Currently in beta in Canada. &copy; <span
+                    id="year">2025</span>.
+                <a href="privacy.html">Privacy</a> · <a href="affiliate-disclosure.html">Affiliate Disclosure</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Mobile menu toggle
+        (function () {
+            var menuBtn = document.querySelector('.mobile-menu-btn');
+            var mobileNav = document.querySelector('.mobile-nav');
+            if (!menuBtn || !mobileNav) return;
+
+            function toggleMenu() {
+                var isOpen = mobileNav.classList.toggle('is-open');
+                menuBtn.classList.toggle('is-open', isOpen);
+                menuBtn.setAttribute('aria-expanded', isOpen);
+                mobileNav.setAttribute('aria-hidden', !isOpen);
+                document.body.classList.toggle('mobile-nav-open', isOpen);
+            }
+
+            menuBtn.addEventListener('click', toggleMenu);
+
+            mobileNav.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (mobileNav.classList.contains('is-open')) {
+                        toggleMenu();
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) {
+                    toggleMenu();
+                }
+            });
+        })();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Pre-fill from URL parameters
+            const params = new URLSearchParams(window.location.search);
+            const subjectParam = params.get('subject');
+            const messageParam = params.get('message');
+
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const subjectSelect = document.getElementById('subject');
+            const messageInput = document.getElementById('message');
+            const form = document.getElementById('contact-form');
+            const submitBtn = form.querySelector('.submit-btn');
+
+            if (subjectParam) {
+                subjectSelect.value = subjectParam;
+            }
+            if (messageParam) {
+                messageInput.value = messageParam;
+            }
+
+            // 2. Form Validation
+            function isValidEmail(email) {
+                // Simple regex for basic email validation
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            }
+
+            function validateForm() {
+                const isNameValid = nameInput.value.trim().length > 0;
+                const isEmailValid = isValidEmail(emailInput.value.trim());
+                const isSubjectValid = subjectSelect.value !== "";
+                const isMessageValid = messageInput.value.trim().length > 0;
+
+                if (isNameValid && isEmailValid && isSubjectValid && isMessageValid) {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('disabled');
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('disabled');
+                }
+            }
+
+            // Initial check (in case of pre-fill or browser auto-fill)
+            validateForm();
+
+            // Add listeners
+            [nameInput, emailInput, subjectSelect, messageInput].forEach(input => {
+                input.addEventListener('input', validateForm);
+                input.addEventListener('change', validateForm);
+            });
+
+            // 3. Submit Handler
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                if (submitBtn.disabled) return;
+
+                const name = nameInput.value;
+                const email = emailInput.value;
+                const subject = subjectSelect.value;
+                const message = messageInput.value;
+
+                const recipient = 'team@topnotchgifts.ca';
+                const mailtoSubject = encodeURIComponent(`[${subject}] Message from ${name}`);
+                const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+
+                window.location.href = `mailto:${recipient}?subject=${mailtoSubject}&body=${body}`;
+            });
+        });
+    </script>
+</body>
+
+</html>
