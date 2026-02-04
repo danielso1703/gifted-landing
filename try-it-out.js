@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.createRecipient = document.getElementById('create-recipient');
   elements.createAge = document.getElementById('create-age');
   elements.createGender = document.getElementById('create-gender');
-  elements.trendingLabel = document.getElementById('trending-label');
+  elements.dynamicSubtitle = document.getElementById('dynamic-subtitle'); // Renamed from trendingLabel
   elements.searchInput = document.getElementById('search-input');
   elements.clusterSelect = document.getElementById('cluster-select');
   elements.subClusterSelect = document.getElementById('sub-cluster-select');
@@ -144,6 +144,7 @@ function setupEventListeners() {
     elements.searchInput.addEventListener('input', function (e) {
       var val = e.target.value;
       state.searchQuery = val.trim();
+      setFiltersVisibility(); // Update clear button visibility immediately
 
       // Show suggestions
       updateSuggestions(val);
@@ -390,25 +391,25 @@ function loadRecipients() {
   loadDefaultView();
 }
 
-// Update the "Trending for…" label (use display label, e.g. "Boyfriend" not "boyfriend")
+// Update the Page Subtitle (Dynamic Subtitle)
 function updateTrendingLabel() {
-  if (!elements.trendingLabel) return;
+  if (!elements.dynamicSubtitle) return;
 
   if (state.searchQuery) {
-    elements.trendingLabel.textContent = 'Results for "' + state.searchQuery + '"';
+    elements.dynamicSubtitle.textContent = 'Results for "' + state.searchQuery + '"';
     return;
   }
 
   if (state.isDefaultView || !state.selectedRecipient) {
-    elements.trendingLabel.textContent = 'Trending for everyone';
+    elements.dynamicSubtitle.textContent = 'For everyone';
     return;
   }
   var display = RECIPIENT_OPTIONS.find(function (r) { return r.value === state.selectedRecipient; });
   var name = display ? display.label : state.selectedRecipient;
-  var label = 'Trending for ' + name;
+  var label = 'For ' + name;
   if (state.selectedAge) label += ' · ' + state.selectedAge;
   if (state.selectedGender) label += ' · ' + state.selectedGender;
-  elements.trendingLabel.textContent = label;
+  elements.dynamicSubtitle.textContent = label;
 }
 
 // Sync state from who filters (recipient, age, gender)
@@ -418,13 +419,27 @@ function syncWhoFromFilters() {
   state.selectedGender = elements.createGender ? elements.createGender.value || null : null;
 }
 
-// Show Area and Category when Topic selected; filters always visible; sync Back to trending button
+// Show Area and Category when Topic selected; filters always visible; sync "Clear" button and active states
 function setFiltersVisibility() {
   var areaGroup = document.getElementById('filter-group-area');
   var categoryGroup = document.getElementById('filter-group-category');
   if (elements.filtersSection) elements.filtersSection.style.display = '';
   if (areaGroup) areaGroup.style.display = state.selectedCluster ? '' : 'none';
   if (categoryGroup) categoryGroup.style.display = state.selectedCluster ? '' : 'none';
+
+  // Show clear button if any filter is active
+  if (elements.clearFiltersBtn) {
+    elements.clearFiltersBtn.style.display = hasActiveFilters() ? '' : 'none';
+  }
+
+  // Update visual active state for selects
+  if (elements.createRecipient) elements.createRecipient.classList.toggle('has-value', !!elements.createRecipient.value);
+  if (elements.createAge) elements.createAge.classList.toggle('has-value', !!elements.createAge.value);
+  if (elements.createGender) elements.createGender.classList.toggle('has-value', !!elements.createGender.value);
+  if (elements.clusterSelect) elements.clusterSelect.classList.toggle('has-value', !!elements.clusterSelect.value);
+  if (elements.subClusterSelect) elements.subClusterSelect.classList.toggle('has-value', !!elements.subClusterSelect.value);
+  if (elements.categorySelect) elements.categorySelect.classList.toggle('has-value', !!elements.categorySelect.value);
+
   if (elements.backToTrendingBtn) {
     elements.backToTrendingBtn.style.display = state.isDefaultView ? 'none' : '';
   }
@@ -703,13 +718,15 @@ function renderDefaultView() {
     prevBtn.type = 'button';
     prevBtn.className = 'carousel-btn carousel-btn--prev';
     prevBtn.setAttribute('aria-label', 'Scroll left');
-    prevBtn.innerHTML = '&#8249;';
+    // SVG Left Arrow
+    prevBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
     var nextBtn = document.createElement('button');
     nextBtn.type = 'button';
     nextBtn.className = 'carousel-btn carousel-btn--next';
     nextBtn.setAttribute('aria-label', 'Scroll right');
-    nextBtn.innerHTML = '&#8250;';
+    // SVG Right Arrow
+    nextBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
 
     var grid = document.createElement('div');
     grid.className = 'items-grid items-grid--carousel';
@@ -990,13 +1007,17 @@ function updateModalContent(item) {
   const category = item.category || item.sub_cluster || item.cluster || '';
 
   let priceText = '';
-  if (giftItem.price) {
+  if (giftItem.price && giftItem.price !== '0' && giftItem.price !== 0) {
     priceText = giftItem.price;
-  } else if (giftItem.price_amount && giftItem.price_currency) {
+  } else if (giftItem.price_amount && giftItem.price_amount > 0 && giftItem.price_currency) {
     priceText = new Intl.NumberFormat('en-CA', {
       style: 'currency',
       currency: giftItem.price_currency
     }).format(giftItem.price_amount);
+  }
+
+  if (!priceText) {
+    priceText = 'View price';
   }
 
   const modalImage = document.getElementById('modal-image');
@@ -1129,15 +1150,20 @@ function buildItemCard(item) {
   }
   var title = giftItem.local_title || giftItem.title || 'Untitled Item';
   var priceText = '';
-  if (giftItem.price) {
+  if (giftItem.price && giftItem.price !== '0' && giftItem.price !== 0) {
     priceText = giftItem.price;
-  } else if (giftItem.price_amount && giftItem.price_currency) {
+  } else if (giftItem.price_amount && giftItem.price_amount > 0 && giftItem.price_currency) {
     priceText = new Intl.NumberFormat('en-CA', { style: 'currency', currency: giftItem.price_currency || 'CAD' }).format(giftItem.price_amount);
   }
+
+  if (!priceText) {
+    priceText = 'View price';
+  }
+
   var categoryLabel = item.category || item.sub_cluster || item.cluster || '';
   var card = document.createElement('div');
   card.className = 'item-card item-card--animate';
-  card.innerHTML = '<div class="item-image"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + (priceText ? '<p class="item-price">' + escapeHtml(priceText) + '</p>' : '') + '<a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.innerHTML = '<div class="item-image"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
   // Ensure link clicks don't trigger the preview modal
   var cardLinks = card.querySelectorAll('a');

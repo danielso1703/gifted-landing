@@ -654,29 +654,32 @@ section {
   max-width: min(1600px, 92vw);
 }
 
-.page-subtitle {
-  font-size: 1rem;
-  color: var(--color-text-muted);
-  margin-bottom: 1.5rem;
+.page-header {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--color-border);
   text-align: center;
 }
 
-.trending-create-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
+.page-header h1 {
+  font-size: clamp(2rem, 5vw, 2.5rem);
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
 }
 
-.trending-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
+.page-subtitle {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
   margin: 0;
+}
+
+.filter-helper {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin: 0 0 1rem;
 }
 
 .trending-create-actions {
@@ -1008,43 +1011,6 @@ section {
   pointer-events: none;
 }
 
-.carousel-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-size: 1.5rem;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
-}
-
-@media (max-width: 767px) {
-  .carousel-btn {
-    display: none !important;
-  }
-}
-
-.carousel-btn:hover {
-  transform: translateY(-1px);
-  border-color: var(--color-accent);
-}
-
-.carousel-btn.is-disabled,
-.carousel-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 .item-card {
   display: flex;
   flex-direction: column;
@@ -1053,6 +1019,8 @@ section {
   border-radius: var(--radius);
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.2s;
+  height: 100%;
+  /* Force full height in grid */
 }
 
 .item-card:hover {
@@ -1127,25 +1095,33 @@ section {
   }
 }
 
+/* Consistent image aspect ratio */
 .item-image {
   display: block;
   width: 100%;
   aspect-ratio: 1;
+  /* Square images */
   background: var(--color-surface);
   overflow: hidden;
+  position: relative;
 }
 
 .item-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.item-card:hover .item-image img {
+  transform: scale(1.05);
 }
 
 .item-content {
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 .item-title {
@@ -1156,6 +1132,7 @@ section {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  /* Limit to 2 lines */
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -1166,12 +1143,16 @@ section {
   color: var(--color-text-muted);
   margin: 0 0 0.5rem;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Truncate 1 line */
 }
 
 .item-price {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-text);
   margin: 0 0 1rem;
 }
 
@@ -1222,6 +1203,60 @@ section {
 .item-shop-btn:hover {
   opacity: 0.95;
   text-decoration: none;
+}
+
+/* Carousel Buttons */
+.carousel-btn {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 767px) {
+  .carousel-btn {
+    display: none !important;
+  }
+}
+
+.carousel-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: var(--shadow-lg);
+}
+
+.carousel-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.carousel-btn.is-disabled,
+.carousel-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Active filter state */
+.filter-select.has-value {
+  background-color: var(--color-surface);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
 }
 
 .load-more-wrapper {

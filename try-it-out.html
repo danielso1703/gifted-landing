@@ -42,31 +42,27 @@
 
   <main class="page-main">
     <div class="container try-it-out-container">
-      <h1>Find Gifts</h1>
-      <p class="page-subtitle">Browse trending gift ideas by recipient type, category, and interests.</p>
+      <!-- New Headline Structure -->
+      <div class="page-header">
+        <h1>Trending gifts</h1>
+        <p class="page-subtitle" id="dynamic-subtitle">For everyone</p>
+      </div>
 
       <!-- Error state -->
       <div id="error-state" class="error-message" style="display: none;"></div>
 
-      <!-- Default trending + nav: Back to trending (search view only) -->
-      <div class="trending-create-row">
-        <p id="trending-label" class="trending-label">Trending for everyone</p>
-        <div class="trending-create-actions">
-          <button type="button" id="back-to-trending-btn" class="back-to-trending-btn" style="display: none;">Back to
-            trending</button>
-        </div>
-      </div>
-
-      <!-- Unified filters: row 1 = search; row 2 = Topic/Area/Category; row 3 = Recipient/Age/Gender (below Topic) -->
-      <!-- Unified filters: Search + Grid of dropdowns -->
+      <!-- Unified filters -->
       <div id="filters-section" class="filters-section">
+        <p class="filter-helper">Start with a recipient to personalize trending.</p>
+
         <div class="search-row">
           <div class="search-wrapper">
             <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
               aria-label="Search for gifts" autocomplete="off">
             <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
           </div>
-          <button type="button" id="clear-filters-btn" class="clear-filters-btn" aria-label="Clear all filters">
+          <button type="button" id="clear-filters-btn" class="clear-filters-btn" aria-label="Clear all filters"
+            style="display: none;">
             Clear
           </button>
         </div>
