@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>About Us — Top Notch Gifts</title>
+    <link rel="icon" type="image/png" href="/Assets/best-large-fill-2.png">
+    <link rel="apple-touch-icon" href="/Assets/best-large-fill-2.png">
+    <meta name="description"
+        content="Learn more about Top Notch Gifts — helping you discover thoughtful gift ideas by recipient, age, budget, and occasion.">
+    <meta property="og:title" content="About Us — Top Notch Gifts">
+    <meta property="og:description"
+        content="Learn more about Top Notch Gifts — helping you discover thoughtful gift ideas by recipient, age, budget, and occasion.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.topnotchgifts.ca/about/">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body class="page">
+    <header class="site-header">
+        <div class="container">
+            <a href="/" class="logo-link">
+                <img src="/Assets/best-large-fill-2.png" alt="" class="logo-img">
+                <span>Top Notch Gifts</span>
+            </a>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/find-gifts/">Find Gifts</a>
+                <a href="/about/" class="active">About</a>
+                <a href="/privacy/">Privacy</a>
+                <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+                <a href="/contact/">Contact</a>
+            </nav>
+            <button class="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">
+                <span></span>
+            </button>
+        </div>
+        <nav class="mobile-nav" aria-hidden="true">
+            <a href="/">Home</a>
+            <a href="/find-gifts/">Find Gifts</a>
+            <a href="/about/" class="active">About</a>
+            <a href="/privacy/">Privacy</a>
+            <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+            <a href="/contact/">Contact</a>
+        </nav>
+    </header>
+
+    <main class="page-main">
+        <div class="container">
+            <h1>About Top Notch Gifts</h1>
+            <p class="updated">Top Notch Gifts is a search and discovery tool helping you find thoughtful gift ideas for
+                everyone on your list.</p>
+
+            <h2>What We Do</h2>
+            <p>We help people discover gift ideas by recipient type, age, budget, and occasion. Whether you're shopping
+                for a birthday, holiday, or special milestone, our goal is to make the process easier and more
+                inspiring.</p>
+
+            <h2>Our Goal</h2>
+            <p>Gift shopping can be stressful and time-consuming. We want to help you find thoughtful gifts faster,
+                reduce that stress, and save you time. We aim to highlight unique ideas you might not have found on your
+                own.</p>
+
+            <h2>How We’re Different</h2>
+            <p>We focus on curated discovery, trending items, and helpful guides. We are not a marketplace—we don't sell
+                products directly. Instead, we organize options from various retailers to give you the best selection in
+                one place.</p>
+
+            <h2>How We Make Money</h2>
+            <p>Top Notch Gifts is a content and referral site. We may earn commissions through affiliate links when you
+                click out to a retailer and make a purchase. This comes at no extra cost to you. For more details,
+                please read our <a href="/affiliate-disclosure/">Affiliate Disclosure</a>.</p>
+
+            <h2>Where We Operate</h2>
+            <p>We are currently based in Toronto, Ontario, and operate with a Canada-first approach, with plans to
+                expand our reach over time.</p>
+
+            <h2>Contact Us</h2>
+            <p>Have questions or feedback? We'd love to hear from you. Visit our <a href="/contact/">Contact page</a> to
+                get in touch.</p>
+
+            <p class="updated" style="margin-top: 3rem; border-top: 1px solid var(--color-border); padding-top: 1rem;">
+                Last updated: February 2026</p>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-grid container">
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="/#how-it-works">How it works</a></li>
+                    <li><a href="/#features">Features</a></li>
+                    <li><a href="/find-gifts/">Find Gifts</a></li>
+                    <li><a href="/about/">About</a></li>
+                    <li><a href="/#faq">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="/privacy/">Privacy Policy</a></li>
+                    <li><a href="/affiliate-disclosure/">Affiliate Disclosure</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <ul>
+                    <li><a href="/contact/">Contact Us</a></li>
+                    <li><a href="mailto:team@topnotchgifts.ca">team@topnotchgifts.ca</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Top Notch Gifts — Gift search and discovery. Currently in beta in Canada. &copy; <span
+                    id="year">2025</span>.
+                <a href="/privacy/">Privacy</a> · <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Mobile menu toggle
+        (function () {
+            var menuBtn = document.querySelector('.mobile-menu-btn');
+            var mobileNav = document.querySelector('.mobile-nav');
+            if (!menuBtn || !mobileNav) return;
+
+            function toggleMenu() {
+                var isOpen = mobileNav.classList.toggle('is-open');
+                menuBtn.classList.toggle('is-open', isOpen);
+                menuBtn.setAttribute('aria-expanded', isOpen);
+                mobileNav.setAttribute('aria-hidden', !isOpen);
+                document.body.classList.toggle('mobile-nav-open', isOpen);
+            }
+
+            menuBtn.addEventListener('click', toggleMenu);
+
+            // Close menu when clicking a link
+            mobileNav.querySelectorAll('a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    if (mobileNav.classList.contains('is-open')) {
+                        toggleMenu();
+                    }
+                });
+            });
+
+            // Close on escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) {
+                    toggleMenu();
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
