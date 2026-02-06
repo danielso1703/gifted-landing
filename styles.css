@@ -677,6 +677,22 @@ section {
   line-height: 1.5;
 }
 
+/* Trust Strip */
+.trust-strip {
+  background: var(--color-surface);
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.trust-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
 /* Features Section */
 .features-section {
   position: relative;
@@ -1829,14 +1845,13 @@ section {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: visibility 0s linear 0.3s;
 }
 
 .modal.is-open {
-  opacity: 1;
   visibility: visible;
+  transition: visibility 0s linear 0s;
 }
 
 .modal-overlay {
@@ -1846,9 +1861,17 @@ section {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  opacity: 0;
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease, -webkit-backdrop-filter 0.3s ease;
+  cursor: pointer;
+}
+
+.modal.is-open .modal-overlay {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  cursor: pointer;
+  opacity: 1;
 }
 
 .modal-container {
