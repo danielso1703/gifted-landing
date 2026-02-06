@@ -83,24 +83,13 @@ const elements = {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', function () {
-  // Check if Supabase library is loaded
-  if (typeof window.supabase === 'undefined') {
-    showError('Supabase library not loaded. Please check your script tags.');
-    return;
-  }
-
-  // Initialize Supabase
-  if (!initSupabase()) {
-    return;
-  }
-
   // Get DOM elements
   elements.backToTrendingBtn = document.getElementById('back-to-trending-btn');
   elements.filtersSection = document.getElementById('filters-section');
   elements.createRecipient = document.getElementById('create-recipient');
   elements.createAge = document.getElementById('create-age');
   elements.createGender = document.getElementById('create-gender');
-  elements.dynamicSubtitle = document.getElementById('dynamic-subtitle'); // Renamed from trendingLabel
+  elements.dynamicSubtitle = document.getElementById('dynamic-subtitle');
   elements.searchInput = document.getElementById('search-input');
   elements.clusterSelect = document.getElementById('cluster-select');
   elements.subClusterSelect = document.getElementById('sub-cluster-select');
@@ -112,6 +101,17 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.errorState = document.getElementById('error-state');
   elements.searchSuggestions = document.getElementById('search-suggestions');
   elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
+
+  // Check if Supabase library is loaded
+  if (typeof window.supabase === 'undefined') {
+    showError('Supabase library not loaded. Please check your script tags.');
+    return;
+  }
+
+  // Initialize Supabase
+  if (!initSupabase()) {
+    return;
+  }
 
   // Set up event listeners
   setupEventListeners();
@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 });
+
 
 function setupEventListeners() {
   // Search input debounce and suggestions
@@ -681,6 +682,14 @@ function openFeedForRecipient(recipientValue) {
 // Render default view: one section per recipient with a grid of items; "See all" and clickable heading
 function renderDefaultView() {
   if (!elements.itemsContainer) return;
+
+  // Hide pre-JS content and skeleton loader when real data is rendered
+  var preJsContent = document.getElementById('pre-js-content');
+  var skeletonLoader = document.getElementById('skeleton-loader');
+  if (preJsContent) preJsContent.style.display = 'none';
+  if (skeletonLoader) skeletonLoader.style.display = 'none';
+  document.querySelector('.find-gifts-container')?.classList.add('has-loaded-items');
+
   elements.itemsContainer.innerHTML = '';
   elements.itemsContainer.className = 'trending-sections';
   RECIPIENT_OPTIONS.forEach(function (r) {
@@ -1559,6 +1568,13 @@ function loadMoreItems() {
 // Render items grid (search view: single grid with load more)
 function renderItems(itemsToRender, isFirstLoad) {
   if (!elements.itemsContainer) return;
+
+  // Hide pre-JS content and skeleton loader when real data is rendered
+  var preJsContent = document.getElementById('pre-js-content');
+  var skeletonLoader = document.getElementById('skeleton-loader');
+  if (preJsContent) preJsContent.style.display = 'none';
+  if (skeletonLoader) skeletonLoader.style.display = 'none';
+  document.querySelector('.find-gifts-container')?.classList.add('has-loaded-items');
 
   var grid;
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
+<script>document.documentElement.classList.remove('no-js');</script>
 
 <head>
   <meta charset="UTF-8">
@@ -7,9 +8,22 @@
   <link rel="icon" type="image/png" href="/Assets/best-large-fill-2.png">
   <link rel="apple-touch-icon" href="/Assets/best-large-fill-2.png">
   <title>Find Gifts — Top Notch Gifts</title>
-  <meta name="description" content="Browse trending gift ideas by recipient type, category, and interests.">
+  <meta name="description"
+    content="Browse and filter trending gift ideas by recipient, age, budget, and interests. Discover perfect gifts for everyone on your list.">
   <meta property="og:title" content="Find Gifts — Top Notch Gifts">
+  <meta property="og:description"
+    content="Browse and filter trending gift ideas by recipient, age, budget, and interests. Discover perfect gifts for everyone on your list.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.topnotchgifts.ca/find-gifts/">
+  <meta property="og:image" content="https://www.topnotchgifts.ca/Assets/og-share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Find Gifts — Top Notch Gifts">
+  <meta name="twitter:description"
+    content="Browse and filter trending gift ideas by recipient, age, budget, and interests. Discover perfect gifts for everyone on your list.">
+  <meta name="twitter:image" content="https://www.topnotchgifts.ca/Assets/og-share.png">
+  <link rel="canonical" href="https://www.topnotchgifts.ca/find-gifts/">
   <link rel="stylesheet" href="/styles.css">
 </head>
 
@@ -44,9 +58,46 @@
 
   <main class="page-main">
     <div class="container find-gifts-container">
-      <!-- New Headline Structure -->
+      <!-- SEO-friendly headline -->
       <div class="page-header">
-        <h1>Trending gifts</h1>
+        <h1>Find Gifts by Recipient, Budget, and Occasion</h1>
+      </div>
+
+      <!-- Pre-JS helpful content (hidden once JS loads data) -->
+      <div id="pre-js-content" class="pre-js-content">
+        <div class="intro-copy">
+          <p>Discover thoughtful gift ideas for everyone on your list. Top Notch Gifts helps Canadians find the perfect
+            presents by filtering trending products by recipient type, age range, budget, and interests. Whether you're
+            shopping for a birthday, holiday, or special occasion, we've curated options from trusted retailers like
+            Walmart, eBay, and Etsy.</p>
+          <p>Browse our handpicked selections below, or use the filters to narrow down your search. Every product links
+            directly to the retailer's site—we're a discovery tool, not a store, so you always shop with confidence at
+            your preferred destination.</p>
+        </div>
+
+        <div class="popular-links-section">
+          <h2>Popular Recipients</h2>
+          <div class="popular-links-grid">
+            <a href="/find-gifts/?recipient=mom" class="popular-link">Gifts for Mom</a>
+            <a href="/find-gifts/?recipient=dad" class="popular-link">Gifts for Dad</a>
+            <a href="/find-gifts/?recipient=wife" class="popular-link">Gifts for Wife</a>
+            <a href="/find-gifts/?recipient=husband" class="popular-link">Gifts for Husband</a>
+            <a href="/find-gifts/?recipient=girlfriend" class="popular-link">Gifts for Girlfriend</a>
+            <a href="/find-gifts/?recipient=boyfriend" class="popular-link">Gifts for Boyfriend</a>
+            <a href="/find-gifts/?recipient=friend" class="popular-link">Gifts for Friends</a>
+            <a href="/find-gifts/?recipient=kids" class="popular-link">Gifts for Kids</a>
+          </div>
+        </div>
+
+        <div class="popular-links-section">
+          <h2>Shop by Budget</h2>
+          <div class="popular-links-grid">
+            <a href="/find-gifts/?budget=under-25" class="popular-link">Under $25</a>
+            <a href="/find-gifts/?budget=25-50" class="popular-link">$25 – $50</a>
+            <a href="/find-gifts/?budget=50-100" class="popular-link">$50 – $100</a>
+            <a href="/find-gifts/?budget=over-100" class="popular-link">Over $100</a>
+          </div>
+        </div>
       </div>
 
       <!-- Error state -->
@@ -117,9 +168,33 @@
         </div>
       </div>
 
+      <!-- Skeleton loader (shown while loading, hidden when data arrives) -->
+      <div id="skeleton-loader" class="skeleton-loader">
+        <div class="skeleton-card">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-text skeleton-title"></div>
+          <div class="skeleton-text skeleton-price"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-text skeleton-title"></div>
+          <div class="skeleton-text skeleton-price"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-text skeleton-title"></div>
+          <div class="skeleton-text skeleton-price"></div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton-image"></div>
+          <div class="skeleton-text skeleton-title"></div>
+          <div class="skeleton-text skeleton-price"></div>
+        </div>
+      </div>
+
       <div id="loading-state" class="loading-message" style="display: none;" aria-live="polite"></div>
 
-      <!-- Empty state -->
+      <!-- Empty state (only shown after user applies filters with 0 results) -->
       <div id="empty-state" class="empty-message" style="display: none;">
         <p>No items found — try another recipient or filter.</p>
       </div>
