@@ -49,6 +49,8 @@ const state = {
   categories: [],
   selectedCategory: null,
   searchQuery: '',
+  priceMin: null,
+  priceMax: null,
   items: [],
   loading: false,
   page: 0,
@@ -58,7 +60,12 @@ const state = {
   currentItemsList: [],
   suggestions: [],
   focusedSuggestionIndex: -1,
-  currentImageIndex: 0
+  currentImageIndex: 0,
+  hubConfig: null,
+  queryConfig: null,
+  hubApplied: false,
+  queryApplied: false,
+  hubFallbackUsed: false
 };
 
 // DOM elements
@@ -81,6 +88,84 @@ const elements = {
   searchSuggestions: null
 };
 
+function parseNumber(value) {
+  if (value === undefined || value === null || value === '') return null;
+  var num = Number(value);
+  return isNaN(num) ? null : num;
+}
+
+function readHubConfig() {
+  var body = document.body;
+  if (!body || !body.dataset) return null;
+  var dataset = body.dataset;
+  var hasConfig = dataset.hub === 'true' || dataset.hub === '1' || dataset.hubRecipient || dataset.hubSearch ||
+    dataset.hubCluster || dataset.hubSubCluster || dataset.hubCategory || dataset.hubPriceMin || dataset.hubPriceMax ||
+    dataset.hubFallback;
+  if (!hasConfig) return null;
+
+  return {
+    recipient: dataset.hubRecipient || null,
+    search: dataset.hubSearch || null,
+    cluster: dataset.hubCluster || null,
+    subCluster: dataset.hubSubCluster || null,
+    category: dataset.hubCategory || null,
+    priceMin: parseNumber(dataset.hubPriceMin),
+    priceMax: parseNumber(dataset.hubPriceMax),
+    fallback: dataset.hubFallback || null
+  };
+}
+
+function readQueryConfig() {
+  if (!window.location || !window.location.search) return null;
+  var params = new URLSearchParams(window.location.search);
+  if (!params || params.toString() === '') return null;
+
+  var recipient = params.get('recipient') || null;
+  var search = params.get('q') || params.get('search') || null;
+  var cluster = params.get('cluster') || params.get('topic') || null;
+  var subCluster = params.get('sub_cluster') || params.get('subcluster') || params.get('area') || null;
+  var category = params.get('category') || null;
+  var budget = params.get('budget') || null;
+  var priceMin = parseNumber(params.get('price_min') || params.get('min') || params.get('priceMin') || params.get('minPrice'));
+  var priceMax = parseNumber(params.get('price_max') || params.get('max') || params.get('priceMax') || params.get('maxPrice'));
+
+  var budgetMap = {
+    'under-25': { max: 25 },
+    'under-50': { max: 50 },
+    '25-50': { min: 25, max: 50 },
+    '50-100': { min: 50, max: 100 },
+    'over-100': { min: 100 }
+  };
+
+  if (budget && budgetMap[budget]) {
+    var mapped = budgetMap[budget];
+    if (priceMin === null && typeof mapped.min === 'number') priceMin = mapped.min;
+    if (priceMax === null && typeof mapped.max === 'number') priceMax = mapped.max;
+  }
+
+  var hasConfig = !!(
+    recipient ||
+    search ||
+    cluster ||
+    subCluster ||
+    category ||
+    priceMin !== null ||
+    priceMax !== null
+  );
+
+  if (!hasConfig) return null;
+
+  return {
+    recipient: recipient,
+    search: search,
+    cluster: cluster,
+    subCluster: subCluster,
+    category: category,
+    priceMin: priceMin,
+    priceMax: priceMax
+  };
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function () {
   // Get DOM elements
@@ -101,6 +186,9 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.errorState = document.getElementById('error-state');
   elements.searchSuggestions = document.getElementById('search-suggestions');
   elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
+
+  state.hubConfig = readHubConfig();
+  state.queryConfig = readQueryConfig();
 
   // Check if Supabase library is loaded
   if (typeof window.supabase === 'undefined') {
@@ -349,7 +437,9 @@ function hasActiveFilters() {
     state.selectedCluster ||
     state.selectedSubCluster ||
     state.selectedCategory ||
-    state.searchQuery
+    state.searchQuery ||
+    state.priceMin !== null ||
+    state.priceMax !== null
   );
 }
 
@@ -378,6 +468,16 @@ function loadRecipients() {
     });
   }
 
+  if (state.queryConfig && !state.queryApplied) {
+    applyQueryConfig();
+    return;
+  }
+
+  if (state.hubConfig && !state.hubApplied) {
+    applyHubConfig();
+    return;
+  }
+
   state.isDefaultView = true;
   state.selectedRecipient = null;
   state.selectedAge = null;
@@ -390,6 +490,54 @@ function loadRecipients() {
   setFiltersVisibility();
   loadClusters();
   loadDefaultView();
+}
+
+function applyConfig(config) {
+  if (!config) return false;
+  state.isDefaultView = false;
+  state.selectedRecipient = config.recipient || null;
+  state.selectedAge = null;
+  state.selectedGender = null;
+  state.selectedCluster = config.cluster || null;
+  state.selectedSubCluster = config.subCluster || null;
+  state.selectedCategory = config.category || null;
+  state.searchQuery = config.search || '';
+  state.priceMin = config.priceMin;
+  state.priceMax = config.priceMax;
+  state.page = 0;
+  state.items = [];
+
+  if (elements.searchInput) elements.searchInput.value = state.searchQuery || '';
+  if (elements.createRecipient) elements.createRecipient.value = state.selectedRecipient || '';
+  if (elements.createAge) elements.createAge.value = '';
+  if (elements.createGender) elements.createGender.value = '';
+  if (elements.clusterSelect) elements.clusterSelect.value = state.selectedCluster || '';
+  if (elements.subClusterSelect) elements.subClusterSelect.value = state.selectedSubCluster || '';
+  if (elements.categorySelect) elements.categorySelect.value = state.selectedCategory || '';
+
+  hideError();
+  hideEmptyState();
+  updateTrendingLabel();
+  loadClusters();
+  if (state.selectedCluster) {
+    updateSubClusters();
+    updateCategories();
+  }
+  setFiltersVisibility();
+  loadItems();
+  return true;
+}
+
+function applyHubConfig() {
+  if (!state.hubConfig || state.hubApplied) return false;
+  state.hubApplied = true;
+  return applyConfig(state.hubConfig);
+}
+
+function applyQueryConfig() {
+  if (!state.queryConfig || state.queryApplied) return false;
+  state.queryApplied = true;
+  return applyConfig(state.queryConfig);
 }
 
 // Update the Page Subtitle (Dynamic Subtitle)
@@ -456,6 +604,8 @@ function goBackToTrending() {
   state.selectedSubCluster = null;
   state.selectedCategory = null;
   state.searchQuery = '';
+  state.priceMin = null;
+  state.priceMax = null;
   state.items = [];
   state.page = 0;
   if (elements.searchInput) elements.searchInput.value = '';
@@ -1324,6 +1474,9 @@ function renderClusterSelect() {
     option.textContent = c.label;
     elements.clusterSelect.appendChild(option);
   });
+  if (state.selectedCluster) {
+    elements.clusterSelect.value = state.selectedCluster;
+  }
 }
 
 // Update Area (sub_cluster) options from taxonomy based on selected Topic
@@ -1360,6 +1513,9 @@ function renderSubClusterSelect() {
     option.textContent = s.label;
     elements.subClusterSelect.appendChild(option);
   });
+  if (state.selectedSubCluster) {
+    elements.subClusterSelect.value = state.selectedSubCluster;
+  }
 }
 
 // Update Category options from taxonomy based on selected Topic and Area
@@ -1401,6 +1557,9 @@ function renderCategorySelect() {
     option.textContent = cat.replace(/_/g, ' ').replace(/\b\w/g, function (l) { return l.toUpperCase(); });
     elements.categorySelect.appendChild(option);
   });
+  if (state.selectedCategory) {
+    elements.categorySelect.value = state.selectedCategory;
+  }
 }
 
 // Load items with filters (search view only)
@@ -1423,6 +1582,8 @@ async function loadItems() {
       recipient: state.selectedRecipient,
       page: startPage,
       startIndex: startIndex,
+      priceMin: state.priceMin,
+      priceMax: state.priceMax,
       cluster: state.selectedCluster || null,
       subCluster: state.selectedSubCluster || null,
       category: state.selectedCategory || null,
@@ -1466,6 +1627,13 @@ async function loadItems() {
     }
     if (state.selectedCategory) {
       query = query.eq('category', state.selectedCategory);
+    }
+
+    if (state.priceMin !== null) {
+      query = query.gte('gift_items.price_amount', state.priceMin);
+    }
+    if (state.priceMax !== null) {
+      query = query.lte('gift_items.price_amount', state.priceMax);
     }
 
     // Apply search execution server-side
@@ -1517,6 +1685,13 @@ async function loadItems() {
       seenIds.add(id);
       return true;
     });
+
+    if (startPage === 0 && filteredData.length === 0 && state.hubConfig && state.hubConfig.fallback === 'default' && !state.hubFallbackUsed) {
+      state.hubFallbackUsed = true;
+      itemsLog('warn', 'Hub filters returned 0 items. Falling back to default view.');
+      goBackToTrending();
+      return;
+    }
 
     let itemsToRender = [];
     if (startPage === 0) {
