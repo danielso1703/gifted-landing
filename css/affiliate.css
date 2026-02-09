@@ -1,0 +1,15 @@
+/* Affiliate Notice */
+.affiliate-notice {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-align: right;
+    margin-bottom: 0.5rem;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+    .affiliate-notice {
+        text-align: center;
+    }
+}
