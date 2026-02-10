@@ -73,7 +73,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0 1rem;
-    height: 52px;
+    height: 48px;
     /* Match select/input height approx */
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -82,7 +82,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
 }
 
 .more-filters-btn:hover {
@@ -130,7 +130,8 @@
         width: 100%;
         min-width: 0;
         max-width: none;
-        /* Reset max-width on mobile */
+        height: 44px;
+        /* More compact on mobile */
     }
 
     .more-filters-btn {
@@ -146,7 +147,7 @@
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
-    padding: 0 1rem;
+    padding: 0 0.875rem;
     height: 52px;
     /* When it appears below primary row if wrapped, or next to price select */
     width: 100%;
@@ -262,11 +263,13 @@
         width: 100%;
         min-width: 0;
         justify-content: space-between;
+        height: 44px;
     }
 
     .custom-price-input {
         width: 100%;
         text-align: center;
+        font-size: 0.9375rem;
     }
 }
 
