@@ -212,9 +212,11 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.emptyState = document.getElementById('empty-state');
   elements.loadingState = document.getElementById('loading-state');
   elements.errorState = document.getElementById('error-state');
+  elements.customPriceClose = document.getElementById('custom-price-close');
   elements.searchSuggestions = document.getElementById('search-suggestions');
   elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
   elements.moreFiltersBtn = document.getElementById('more-filters-btn');
+  elements.clearSearchBtn = document.getElementById('clear-search-btn');
 
   state.hubConfig = readHubConfig();
   state.queryConfig = readQueryConfig();
@@ -261,6 +263,12 @@ function setupEventListeners() {
   if (elements.searchInput) {
     elements.searchInput.addEventListener('input', function (e) {
       var val = e.target.value;
+
+      // Show/Hide Clear X
+      if (elements.clearSearchBtn) {
+        elements.clearSearchBtn.style.display = val.length > 0 ? 'flex' : 'none';
+      }
+
       state.searchQuery = val.trim();
       setFiltersVisibility(); // Update clear button visibility immediately
 
@@ -269,6 +277,8 @@ function setupEventListeners() {
 
       clearTimeout(state.searchTimeout);
       state.searchTimeout = setTimeout(function () {
+        // If search is just text typing, maybe we don't auto-reload everything immediately?
+        // Current logic: auto-reload on debounce
         if (state.searchQuery) {
           state.isDefaultView = false;
           setFiltersVisibility();
@@ -287,7 +297,7 @@ function setupEventListeners() {
             loadItems();
           }
         }
-      }, 300);
+      }, 500); // Increased debounce slightly
     });
 
     elements.searchInput.addEventListener('keydown', function (e) {
@@ -324,6 +334,19 @@ function setupEventListeners() {
     });
   }
 
+  // Clear Search Button
+  if (elements.clearSearchBtn) {
+    elements.clearSearchBtn.addEventListener('click', function () {
+      if (elements.searchInput) {
+        elements.searchInput.value = '';
+        elements.searchInput.focus();
+        // Trigger input event manually
+        var event = new Event('input', { bubbles: true });
+        elements.searchInput.dispatchEvent(event);
+      }
+    });
+  }
+
   // Filter selects
   if (elements.clusterSelect) {
     elements.clusterSelect.addEventListener('change', function (e) {
@@ -335,6 +358,7 @@ function setupEventListeners() {
       updateSubClusters();
       updateCategories();
 
+      // Trigger search automatically on drop change? Yes per existing logic
       if (hasActiveFilters()) {
         state.isDefaultView = false;
         setFiltersVisibility();
@@ -389,7 +413,7 @@ function setupEventListeners() {
     });
   }
 
-  // Who filters: selecting any filter switches to search view and loads; clearing all returns to trending
+  // Who filters
   if (elements.createRecipient) {
     elements.createRecipient.addEventListener('change', function () {
       syncWhoFromFilters();
@@ -448,10 +472,14 @@ function setupEventListeners() {
 
       // Handle Custom Option visibility
       if (val === 'custom') {
-        if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'flex';
-        return; // Don't trigger search yet, wait for Apply
-      } else {
-        if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+        if (elements.customPriceContainer) {
+          elements.priceSelect.style.display = 'none'; // Hide select
+          elements.customPriceContainer.style.display = 'flex'; // Show custom
+          // Focus min input
+          if (elements.customPriceMin) elements.customPriceMin.focus();
+        }
+        // Do NOT trigger load until user clicks search
+        return;
       }
 
       if (!val) {
@@ -485,13 +513,48 @@ function setupEventListeners() {
     });
   }
 
-  // Custom Price Apply Button
-  if (elements.customPriceApply) {
-    elements.customPriceApply.addEventListener('click', function () {
+  // Custom Price Close (X) Button
+  if (elements.customPriceClose) {
+    elements.customPriceClose.addEventListener('click', function () {
+      // Hide custom, show select
+      if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+      if (elements.priceSelect) {
+        elements.priceSelect.style.display = 'block';
+        elements.priceSelect.value = ''; // Reset to "Any price"
+
+        // Trigger change to update state
+        var event = new Event('change');
+        elements.priceSelect.dispatchEvent(event);
+      }
+    });
+  }
+
+  // Main Search Button Logic
+  var mainSearchBtn = document.getElementById('main-search-btn');
+  if (mainSearchBtn) {
+    mainSearchBtn.addEventListener('click', function () {
+      performSearch();
+    });
+  }
+
+  // Enter key on inputs triggers search
+  function handleEnter(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performSearch();
+    }
+  }
+
+  if (elements.customPriceMin) elements.customPriceMin.addEventListener('keydown', handleEnter);
+  if (elements.customPriceMax) elements.customPriceMax.addEventListener('keydown', handleEnter);
+
+  // Perform Search Logic
+  function performSearch() {
+    // 1. Update Custom Price State if visible
+    if (elements.customPriceContainer && elements.customPriceContainer.style.display !== 'none') {
       var minVal = elements.customPriceMin ? parseInt(elements.customPriceMin.value, 10) : NaN;
       var maxVal = elements.customPriceMax ? parseInt(elements.customPriceMax.value, 10) : NaN;
 
-      // Validate: allow 0, ignore NaN/empty effectively
       state.priceMin = !isNaN(minVal) && minVal >= 0 ? minVal : null;
       state.priceMax = !isNaN(maxVal) && maxVal >= 0 ? maxVal : null;
 
@@ -500,27 +563,24 @@ function setupEventListeners() {
         var temp = state.priceMin;
         state.priceMin = state.priceMax;
         state.priceMax = temp;
-        // Update inputs to match
         elements.customPriceMin.value = state.priceMin;
         elements.customPriceMax.value = state.priceMax;
       }
+    }
 
-      if (hasActiveFilters()) {
-        state.isDefaultView = false;
-        state.page = 0;
-        state.items = [];
-        updateTrendingLabel();
-        setFiltersVisibility();
-        loadClusters();
-        hideEmptyState();
-        loadItems();
-      } else {
-        // If user clicked apply but inputs empty, treat as clear?
-        // Or if they just wanted to see default but with custom selected...
-        // Let's assume if both null, it's effectively clearing price filter
-        goBackToTrending();
-      }
-    });
+    // 2. Trigger Load
+    if (hasActiveFilters()) {
+      state.isDefaultView = false;
+      state.page = 0;
+      state.items = [];
+      updateTrendingLabel();
+      setFiltersVisibility();
+      loadClusters();
+      hideEmptyState();
+      loadItems();
+    } else {
+      goBackToTrending();
+    }
   }
 
   // Back to trending: return to default view
@@ -545,8 +605,6 @@ function setupEventListeners() {
         var isHidden = secondary.style.display === 'none';
         secondary.style.display = isHidden ? 'block' : 'none';
         elements.moreFiltersBtn.setAttribute('aria-expanded', isHidden);
-
-        // Update button text? Optional, but arrow rotation handles visual cue
       }
     });
   }

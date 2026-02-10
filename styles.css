@@ -1205,7 +1205,10 @@ section {
 .search-input {
   width: 100%;
   max-width: 100%;
-  padding: 1rem 1.25rem;
+  height: 52px;
+  /* Ensure match with other inputs */
+  padding: 0 1.25rem;
+  /* Vertical centering handled by height/line-height */
   /* Larger touch target */
   font-size: 1.0625rem;
   font-family: var(--font-sans);

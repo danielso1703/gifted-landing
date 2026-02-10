@@ -157,6 +157,14 @@
             <div class="search-wrapper">
               <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
                 aria-label="Search for gifts" autocomplete="off">
+              <button type="button" id="clear-search-btn" class="clear-search-btn" aria-label="Clear search"
+                style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
               <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
             </div>
 
@@ -166,7 +174,7 @@
               </select>
             </div>
 
-            <div class="filter-item">
+            <div class="filter-item price-filter-item">
               <select id="price-select" class="filter-select" aria-label="Price Range">
                 <option value="">Any price</option>
                 <option value="0-25">Under $25</option>
@@ -176,7 +184,28 @@
                 <option value="200+">$200+</option>
                 <option value="custom">Custom</option>
               </select>
+
+              <!-- Custom Price Inputs (Hidden by default, swapped in place) -->
+              <div id="custom-price-container" class="custom-price-container" style="display: none;">
+                <input type="number" id="custom-price-min" class="custom-price-input" placeholder="Min" min="0"
+                  aria-label="Minimum Price">
+                <span class="price-separator">-</span>
+                <input type="number" id="custom-price-max" class="custom-price-input" placeholder="Max" min="0"
+                  aria-label="Maximum Price">
+                <button type="button" id="custom-price-close" class="custom-price-close"
+                  aria-label="Close custom price">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
             </div>
+
+            <button type="button" id="main-search-btn" class="main-search-btn">
+              Search
+            </button>
 
             <button type="button" id="more-filters-btn" class="more-filters-btn" aria-expanded="false">
               <span>More Filters</span>
@@ -185,17 +214,6 @@
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
-          </div>
-
-          <!-- Custom Price Inputs (Hidden by default, moves here for flow) -->
-          <div id="custom-price-container" class="filter-item custom-price-container" style="display: none;">
-            <input type="number" id="custom-price-min" class="custom-price-input" placeholder="Min $" min="0"
-              aria-label="Minimum Price">
-            <span class="price-separator">-</span>
-            <input type="number" id="custom-price-max" class="custom-price-input" placeholder="Max $" min="0"
-              aria-label="Maximum Price">
-            <button type="button" id="custom-price-apply" class="custom-price-btn"
-              aria-label="Apply Price Range">Go</button>
           </div>
 
           <!-- Secondary Filters: Hidden by default -->
@@ -243,49 +261,48 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Skeleton loader (shown while loading, hidden when data arrives) -->
-      <div id="skeleton-loader" class="skeleton-loader">
-        <div class="skeleton-card">
-          <div class="skeleton-image"></div>
-          <div class="skeleton-text skeleton-title"></div>
-          <div class="skeleton-text skeleton-price"></div>
+        <!-- Skeleton loader (shown while loading, hidden when data arrives) -->
+        <div id="skeleton-loader" class="skeleton-loader">
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-text skeleton-title"></div>
+            <div class="skeleton-text skeleton-price"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-text skeleton-title"></div>
+            <div class="skeleton-text skeleton-price"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-text skeleton-title"></div>
+            <div class="skeleton-text skeleton-price"></div>
+          </div>
+          <div class="skeleton-card">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-text skeleton-title"></div>
+            <div class="skeleton-text skeleton-price"></div>
+          </div>
         </div>
-        <div class="skeleton-card">
-          <div class="skeleton-image"></div>
-          <div class="skeleton-text skeleton-title"></div>
-          <div class="skeleton-text skeleton-price"></div>
+
+        <div id="loading-state" class="loading-message" style="display: none;" aria-live="polite"></div>
+
+        <!-- Empty state (only shown after user applies filters with 0 results) -->
+        <div id="empty-state" class="empty-message" style="display: none;">
+          <p>No items found — try another recipient or filter.</p>
         </div>
-        <div class="skeleton-card">
-          <div class="skeleton-image"></div>
-          <div class="skeleton-text skeleton-title"></div>
-          <div class="skeleton-text skeleton-price"></div>
-        </div>
-        <div class="skeleton-card">
-          <div class="skeleton-image"></div>
-          <div class="skeleton-text skeleton-title"></div>
-          <div class="skeleton-text skeleton-price"></div>
+
+        <div class="affiliate-notice">Contains affiliate links</div>
+
+        <!-- Items: default = sections per recipient; search = single grid -->
+        <div id="items-container"></div>
+
+        <!-- Load more button -->
+        <div class="load-more-wrapper">
+          <button id="load-more-btn" class="load-more-btn" style="display: none;">Load more</button>
         </div>
       </div>
-
-      <div id="loading-state" class="loading-message" style="display: none;" aria-live="polite"></div>
-
-      <!-- Empty state (only shown after user applies filters with 0 results) -->
-      <div id="empty-state" class="empty-message" style="display: none;">
-        <p>No items found — try another recipient or filter.</p>
-      </div>
-
-      <div class="affiliate-notice">Contains affiliate links</div>
-
-      <!-- Items: default = sections per recipient; search = single grid -->
-      <div id="items-container"></div>
-
-      <!-- Load more button -->
-      <div class="load-more-wrapper">
-        <button id="load-more-btn" class="load-more-btn" style="display: none;">Load more</button>
-      </div>
-    </div>
   </main>
 
   <footer class="site-footer">
