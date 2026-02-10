@@ -31,7 +31,7 @@ function initSupabase() {
   return true;
 }
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 100; // Increased to support client-side filtering
 
 // State management
 const state = {
@@ -75,6 +75,11 @@ const elements = {
   createRecipient: null,
   createAge: null,
   createGender: null,
+  priceSelect: null,
+  customPriceContainer: null,
+  customPriceMin: null,
+  customPriceMax: null,
+  customPriceApply: null,
   trendingLabel: null,
   searchInput: null,
   clusterSelect: null,
@@ -85,13 +90,31 @@ const elements = {
   emptyState: null,
   loadingState: null,
   errorState: null,
-  searchSuggestions: null
+  searchSuggestions: null,
+  moreFiltersBtn: null
 };
 
 function parseNumber(value) {
   if (value === undefined || value === null || value === '') return null;
   var num = Number(value);
+  var num = Number(value);
   return isNaN(num) ? null : num;
+}
+
+function normalizePrice(priceVal) {
+  if (priceVal === undefined || priceVal === null) return null;
+  // If already a number
+  if (typeof priceVal === 'number') return priceVal;
+
+  // If string, strip non-numeric except dot
+  // e.g. "USD 25.00" -> "25.00"
+  // e.g. "$30" -> "30"
+  var s = String(priceVal);
+  var matches = s.match(/[0-9]+(\.[0-9]+)?/);
+  if (matches && matches[0]) {
+    return parseFloat(matches[0]);
+  }
+  return null;
 }
 
 function readHubConfig() {
@@ -174,6 +197,11 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.createRecipient = document.getElementById('create-recipient');
   elements.createAge = document.getElementById('create-age');
   elements.createGender = document.getElementById('create-gender');
+  elements.priceSelect = document.getElementById('price-select');
+  elements.customPriceContainer = document.getElementById('custom-price-container');
+  elements.customPriceMin = document.getElementById('custom-price-min');
+  elements.customPriceMax = document.getElementById('custom-price-max');
+  elements.customPriceApply = document.getElementById('custom-price-apply');
   elements.dynamicSubtitle = document.getElementById('dynamic-subtitle');
   elements.searchInput = document.getElementById('search-input');
   elements.clusterSelect = document.getElementById('cluster-select');
@@ -186,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.errorState = document.getElementById('error-state');
   elements.searchSuggestions = document.getElementById('search-suggestions');
   elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
+  elements.moreFiltersBtn = document.getElementById('more-filters-btn');
 
   state.hubConfig = readHubConfig();
   state.queryConfig = readQueryConfig();
@@ -413,6 +442,87 @@ function setupEventListeners() {
     });
   }
 
+  if (elements.priceSelect) {
+    elements.priceSelect.addEventListener('change', function (e) {
+      var val = e.target.value;
+
+      // Handle Custom Option visibility
+      if (val === 'custom') {
+        if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'flex';
+        return; // Don't trigger search yet, wait for Apply
+      } else {
+        if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+      }
+
+      if (!val) {
+        state.priceMin = null;
+        state.priceMax = null;
+      } else if (val.indexOf('+') !== -1) {
+        // e.g. "200+"
+        state.priceMin = parseInt(val.replace('+', ''), 10);
+        state.priceMax = null;
+      } else {
+        // e.g. "25-50"
+        var parts = val.split('-');
+        if (parts.length === 2) {
+          state.priceMin = parseInt(parts[0], 10);
+          state.priceMax = parseInt(parts[1], 10);
+        }
+      }
+
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        state.page = 0;
+        state.items = [];
+        updateTrendingLabel();
+        setFiltersVisibility();
+        loadClusters();
+        hideEmptyState();
+        loadItems();
+      } else {
+        goBackToTrending();
+      }
+    });
+  }
+
+  // Custom Price Apply Button
+  if (elements.customPriceApply) {
+    elements.customPriceApply.addEventListener('click', function () {
+      var minVal = elements.customPriceMin ? parseInt(elements.customPriceMin.value, 10) : NaN;
+      var maxVal = elements.customPriceMax ? parseInt(elements.customPriceMax.value, 10) : NaN;
+
+      // Validate: allow 0, ignore NaN/empty effectively
+      state.priceMin = !isNaN(minVal) && minVal >= 0 ? minVal : null;
+      state.priceMax = !isNaN(maxVal) && maxVal >= 0 ? maxVal : null;
+
+      // Swap if min > max
+      if (state.priceMin !== null && state.priceMax !== null && state.priceMin > state.priceMax) {
+        var temp = state.priceMin;
+        state.priceMin = state.priceMax;
+        state.priceMax = temp;
+        // Update inputs to match
+        elements.customPriceMin.value = state.priceMin;
+        elements.customPriceMax.value = state.priceMax;
+      }
+
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        state.page = 0;
+        state.items = [];
+        updateTrendingLabel();
+        setFiltersVisibility();
+        loadClusters();
+        hideEmptyState();
+        loadItems();
+      } else {
+        // If user clicked apply but inputs empty, treat as clear?
+        // Or if they just wanted to see default but with custom selected...
+        // Let's assume if both null, it's effectively clearing price filter
+        goBackToTrending();
+      }
+    });
+  }
+
   // Back to trending: return to default view
   if (elements.backToTrendingBtn) {
     elements.backToTrendingBtn.addEventListener('click', function () {
@@ -424,6 +534,20 @@ function setupEventListeners() {
   if (elements.clearFiltersBtn) {
     elements.clearFiltersBtn.addEventListener('click', function () {
       goBackToTrending();
+    });
+  }
+
+  // More Filters Toggle
+  if (elements.moreFiltersBtn) {
+    elements.moreFiltersBtn.addEventListener('click', function () {
+      var secondary = document.getElementById('secondary-filters');
+      if (secondary) {
+        var isHidden = secondary.style.display === 'none';
+        secondary.style.display = isHidden ? 'block' : 'none';
+        elements.moreFiltersBtn.setAttribute('aria-expanded', isHidden);
+
+        // Update button text? Optional, but arrow rotation handles visual cue
+      }
     });
   }
 }
@@ -485,6 +609,7 @@ function loadRecipients() {
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  if (elements.priceSelect) elements.priceSelect.value = '';
 
   updateTrendingLabel();
   setFiltersVisibility();
@@ -504,6 +629,43 @@ function applyConfig(config) {
   state.searchQuery = config.search || '';
   state.priceMin = config.priceMin;
   state.priceMax = config.priceMax;
+
+  // Map priceMin/Max back to select value if possible
+  var priceVal = '';
+  var isCustom = false;
+
+  if (state.priceMin !== null && state.priceMax !== null) {
+    var check = state.priceMin + '-' + state.priceMax;
+    // Check if check is in select options (hardcoded check or simple heuristic)
+    if (['0-25', '25-50', '50-100', '100-200'].includes(check)) {
+      priceVal = check;
+    } else {
+      isCustom = true;
+    }
+  } else if (state.priceMin !== null && state.priceMax === null) {
+    var check = state.priceMin + '+';
+    if (['200+'].includes(check)) {
+      priceVal = check;
+    } else {
+      isCustom = true;
+    }
+  } else if (state.priceMin === null && state.priceMax !== null) {
+    priceVal = '0-' + state.priceMax; // fallback common under X logic
+    if (!['0-25'].includes(priceVal)) isCustom = true; // simplified check
+  }
+
+  if (isCustom) {
+    priceVal = 'custom';
+    if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'flex';
+    if (elements.customPriceMin) elements.customPriceMin.value = state.priceMin !== null ? state.priceMin : '';
+    if (elements.customPriceMax) elements.customPriceMax.value = state.priceMax !== null ? state.priceMax : '';
+  } else {
+    if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+    if (elements.customPriceMin) elements.customPriceMin.value = '';
+    if (elements.customPriceMax) elements.customPriceMax.value = '';
+  }
+
+
   state.page = 0;
   state.items = [];
 
@@ -511,6 +673,7 @@ function applyConfig(config) {
   if (elements.createRecipient) elements.createRecipient.value = state.selectedRecipient || '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  if (elements.priceSelect) elements.priceSelect.value = priceVal || '';
   if (elements.clusterSelect) elements.clusterSelect.value = state.selectedCluster || '';
   if (elements.subClusterSelect) elements.subClusterSelect.value = state.selectedSubCluster || '';
   if (elements.categorySelect) elements.categorySelect.value = state.selectedCategory || '';
@@ -524,6 +687,16 @@ function applyConfig(config) {
     updateCategories();
   }
   setFiltersVisibility();
+
+  // Auto-expand secondary filters if any are active
+  if (state.selectedAge || state.selectedGender || state.selectedCluster || state.selectedSubCluster || state.selectedCategory) {
+    var secondary = document.getElementById('secondary-filters');
+    if (secondary) {
+      secondary.style.display = 'block';
+      if (elements.moreFiltersBtn) elements.moreFiltersBtn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
   loadItems();
   return true;
 }
@@ -585,6 +758,13 @@ function setFiltersVisibility() {
   if (elements.createRecipient) elements.createRecipient.classList.toggle('has-value', !!elements.createRecipient.value);
   if (elements.createAge) elements.createAge.classList.toggle('has-value', !!elements.createAge.value);
   if (elements.createGender) elements.createGender.classList.toggle('has-value', !!elements.createGender.value);
+  if (elements.priceSelect) {
+    elements.priceSelect.classList.toggle('has-value', !!elements.priceSelect.value && elements.priceSelect.value !== 'custom');
+    // If custom is selected and has values, we might want to style it or the container
+    if (elements.priceSelect.value === 'custom' && (state.priceMin !== null || state.priceMax !== null)) {
+      elements.priceSelect.classList.add('has-value');
+    }
+  }
   if (elements.clusterSelect) elements.clusterSelect.classList.toggle('has-value', !!elements.clusterSelect.value);
   if (elements.subClusterSelect) elements.subClusterSelect.classList.toggle('has-value', !!elements.subClusterSelect.value);
   if (elements.categorySelect) elements.categorySelect.classList.toggle('has-value', !!elements.categorySelect.value);
@@ -612,9 +792,19 @@ function goBackToTrending() {
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  if (elements.priceSelect) elements.priceSelect.value = '';
+  if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+  if (elements.customPriceMin) elements.customPriceMin.value = '';
+  if (elements.customPriceMax) elements.customPriceMax.value = '';
   if (elements.clusterSelect) elements.clusterSelect.value = '';
   if (elements.subClusterSelect) elements.subClusterSelect.value = '';
   if (elements.categorySelect) elements.categorySelect.value = '';
+
+  // Collapse secondary filters
+  var secondary = document.getElementById('secondary-filters');
+  if (secondary) secondary.style.display = 'none';
+  if (elements.moreFiltersBtn) elements.moreFiltersBtn.setAttribute('aria-expanded', 'false');
+
   hideError();
   hideEmptyState();
   updateTrendingLabel();
@@ -822,6 +1012,7 @@ function openFeedForRecipient(recipientValue) {
   if (elements.createRecipient) elements.createRecipient.value = recipientValue;
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  if (elements.priceSelect) elements.priceSelect.value = '';
   hideError();
   updateTrendingLabel();
   setFiltersVisibility();
@@ -1629,12 +1820,13 @@ async function loadItems() {
       query = query.eq('category', state.selectedCategory);
     }
 
-    if (state.priceMin !== null) {
-      query = query.gte('gift_items.price_amount', state.priceMin);
-    }
-    if (state.priceMax !== null) {
-      query = query.lte('gift_items.price_amount', state.priceMax);
-    }
+    // Price filtering moved to client-side to handle "USD 25" strings
+    // if (state.priceMin !== null) {
+    //   query = query.gte('gift_items.price_amount', state.priceMin);
+    // }
+    // if (state.priceMax !== null) {
+    //   query = query.lte('gift_items.price_amount', state.priceMax);
+    // }
 
     // Apply search execution server-side
     if (state.searchQuery) {
@@ -1685,6 +1877,28 @@ async function loadItems() {
       seenIds.add(id);
       return true;
     });
+
+    // Client-side Price Filtering
+    if (state.priceMin !== null || state.priceMax !== null) {
+      filteredData = filteredData.filter(function (item) {
+        // Prefer price_amount if valid? User said price_amount unreliable.
+        // Let's use normalizePrice on 'price' string if available, falling back to price_amount
+        var p = item.gift_items.price;
+        var val = normalizePrice(p);
+
+        // If val is null, try price_amount
+        if (val === null && item.gift_items.price_amount) {
+          val = item.gift_items.price_amount;
+        }
+
+        if (val === null) return false; // No price found, filter out? Or keep? Safest to filter out if filtering is active.
+
+        if (state.priceMin !== null && val < state.priceMin) return false;
+        if (state.priceMax !== null && val > state.priceMax) return false;
+
+        return true;
+      });
+    }
 
     if (startPage === 0 && filteredData.length === 0 && state.hubConfig && state.hubConfig.fallback === 'default' && !state.hubFallbackUsed) {
       state.hubFallbackUsed = true;

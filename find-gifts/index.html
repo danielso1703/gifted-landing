@@ -143,65 +143,104 @@
 
       <!-- Unified filters -->
       <div id="filters-section" class="filters-section">
-        <p class="filter-helper">Start with a recipient to personalize trending.</p>
-
-        <div class="search-row">
-          <div class="search-wrapper">
-            <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
-              aria-label="Search for gifts" autocomplete="off">
-            <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
-          </div>
+        <div class="filters-header">
+          <p class="filter-helper">Start with a recipient to personalize trending.</p>
           <button type="button" id="clear-filters-btn" class="clear-filters-btn" aria-label="Clear all filters"
             style="display: none;">
-            Clear
+            Clear all
           </button>
         </div>
 
-        <div class="filters-grid">
-          <div class="filter-item">
-            <select id="cluster-select" class="filter-select" aria-label="Topic">
-              <option value="">All Topics</option>
-            </select>
+        <div class="filters-container">
+          <!-- Primary Filters: Always visible -->
+          <div class="primary-filters">
+            <div class="search-wrapper">
+              <input type="text" id="search-input" class="search-input" placeholder="Search for gifts..."
+                aria-label="Search for gifts" autocomplete="off">
+              <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+            </div>
+
+            <div class="filter-item">
+              <select id="create-recipient" class="filter-select" aria-label="Recipient">
+                <option value="">Select recipient</option>
+              </select>
+            </div>
+
+            <div class="filter-item">
+              <select id="price-select" class="filter-select" aria-label="Price Range">
+                <option value="">Any price</option>
+                <option value="0-25">Under $25</option>
+                <option value="25-50">$25 - $50</option>
+                <option value="50-100">$50 - $100</option>
+                <option value="100-200">$100 - $200</option>
+                <option value="200+">$200+</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <button type="button" id="more-filters-btn" class="more-filters-btn" aria-expanded="false">
+              <span>More Filters</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
           </div>
 
-          <!-- Sub-filters (hidden by default) -->
-          <div id="filter-group-area" class="filter-item" style="display: none;">
-            <select id="sub-cluster-select" class="filter-select" aria-label="Area">
-              <option value="">All Areas</option>
-            </select>
+          <!-- Custom Price Inputs (Hidden by default, moves here for flow) -->
+          <div id="custom-price-container" class="filter-item custom-price-container" style="display: none;">
+            <input type="number" id="custom-price-min" class="custom-price-input" placeholder="Min $" min="0"
+              aria-label="Minimum Price">
+            <span class="price-separator">-</span>
+            <input type="number" id="custom-price-max" class="custom-price-input" placeholder="Max $" min="0"
+              aria-label="Maximum Price">
+            <button type="button" id="custom-price-apply" class="custom-price-btn"
+              aria-label="Apply Price Range">Go</button>
           </div>
 
-          <div id="filter-group-category" class="filter-item" style="display: none;">
-            <select id="category-select" class="filter-select" aria-label="Category">
-              <option value="">All Categories</option>
-            </select>
-          </div>
+          <!-- Secondary Filters: Hidden by default -->
+          <div id="secondary-filters" class="secondary-filters" style="display: none;">
+            <div class="filters-grid">
+              <div class="filter-item">
+                <select id="create-age" class="filter-select" aria-label="Age">
+                  <option value="">Any age</option>
+                  <option value="18-24">18–24</option>
+                  <option value="25-34">25–34</option>
+                  <option value="35-44">35–44</option>
+                  <option value="45-54">45–54</option>
+                  <option value="55-64">55–64</option>
+                  <option value="65+">65+</option>
+                </select>
+              </div>
 
-          <div class="filter-item">
-            <select id="create-recipient" class="filter-select" aria-label="Recipient">
-              <option value="">Select recipient</option>
-            </select>
-          </div>
+              <div class="filter-item">
+                <select id="create-gender" class="filter-select" aria-label="Gender">
+                  <option value="">Any gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="unisex">Unisex</option>
+                </select>
+              </div>
 
-          <div class="filter-item">
-            <select id="create-age" class="filter-select" aria-label="Age">
-              <option value="">Any age</option>
-              <option value="18-24">18–24</option>
-              <option value="25-34">25–34</option>
-              <option value="35-44">35–44</option>
-              <option value="45-54">45–54</option>
-              <option value="55-64">55–64</option>
-              <option value="65+">65+</option>
-            </select>
-          </div>
+              <div class="filter-item">
+                <select id="cluster-select" class="filter-select" aria-label="Topic">
+                  <option value="">All Topics</option>
+                </select>
+              </div>
 
-          <div class="filter-item">
-            <select id="create-gender" class="filter-select" aria-label="Gender">
-              <option value="">Any gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="unisex">Unisex</option>
-            </select>
+              <!-- Sub-filters (hidden by default) -->
+              <div id="filter-group-area" class="filter-item" style="display: none;">
+                <select id="sub-cluster-select" class="filter-select" aria-label="Area">
+                  <option value="">All Areas</option>
+                </select>
+              </div>
+
+              <div id="filter-group-category" class="filter-item" style="display: none;">
+                <select id="category-select" class="filter-select" aria-label="Category">
+                  <option value="">All Categories</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -341,7 +380,7 @@
   <!-- Configuration -->
   <script src="/config.js"></script>
   <!-- Page logic -->
-  <script src="/find-gifts.js"></script>
+  <script src="/find-gifts.js?v=2"></script>
   <script>
     // Mobile menu toggle
     (function () {

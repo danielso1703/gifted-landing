@@ -13,3 +13,201 @@
         text-align: center;
     }
 }
+
+/* Unified Filter Layout */
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.filter-helper {
+    margin: 0;
+    /* Override default margin */
+}
+
+.clear-filters-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.clear-filters-btn:hover {
+    color: var(--color-accent);
+}
+
+.filters-container {
+    background: var(--color-bg);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+.primary-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.primary-filters .search-wrapper {
+    flex: 1;
+    min-width: 200px;
+}
+
+.primary-filters .filter-item {
+    min-width: 15rem;
+}
+
+.more-filters-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 52px;
+    /* Match select/input height approx */
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-text);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9375rem;
+}
+
+.more-filters-btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.more-filters-btn svg {
+    transition: transform 0.2s;
+}
+
+.more-filters-btn[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+.secondary-filters {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .primary-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .primary-filters .search-wrapper,
+    .primary-filters .filter-item,
+    .more-filters-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .more-filters-btn {
+        justify-content: center;
+    }
+}
+
+/* Custom Price Inputs */
+.custom-price-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    height: 52px;
+    /* Match select height */
+    margin-top: 0.75rem;
+    /* When it appears below primary row if wrapped, or next to price select */
+}
+
+@media (min-width: 769px) {
+    .custom-price-container {
+        margin-top: 0;
+    }
+}
+
+.custom-price-input {
+    width: 60px;
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: #1e293b;
+    padding: 0.25rem;
+    -moz-appearance: textfield;
+    /* Remove spinner */
+    appearance: textfield;
+    text-align: center;
+}
+
+.custom-price-input::-webkit-outer-spin-button,
+.custom-price-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.custom-price-input:focus {
+    outline: none;
+    background: #f8fafc;
+    border-radius: 0.25rem;
+}
+
+.price-separator {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.custom-price-btn {
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.custom-price-btn:hover {
+    background: #334155;
+    background-color: #334155;
+}
+
+@media (max-width: 640px) {
+    .custom-price-container {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .custom-price-input {
+        width: 100%;
+        text-align: center;
+    }
+}
