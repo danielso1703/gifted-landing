@@ -1328,14 +1328,11 @@ section {
   background-position: right 1.25rem center;
   background-size: 1rem;
   padding-right: 2.75rem;
-  box-shadow: var(--shadow);
   transition: all 0.2s ease;
 }
 
 .filter-select:hover {
   border-color: var(--color-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .filter-select:focus {

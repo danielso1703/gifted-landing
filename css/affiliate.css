@@ -1,16 +1,17 @@
-/* Affiliate Notice */
+/* Affiliate Notice - Moved to be less intrusive */
 .affiliate-notice {
     font-size: 0.75rem;
     color: var(--color-text-muted);
-    text-align: right;
-    margin-bottom: 0.5rem;
+    text-align: center;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
     font-style: italic;
-    opacity: 0.8;
+    opacity: 0.6;
 }
 
 @media (max-width: 640px) {
     .affiliate-notice {
-        text-align: center;
+        margin-top: 1.5rem;
     }
 }
 
@@ -19,12 +20,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .filter-helper {
     margin: 0;
-    /* Override default margin */
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
 }
 
 .clear-filters-btn {
@@ -45,7 +47,7 @@
 .filters-container {
     background: var(--color-bg);
     border-radius: var(--radius);
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .primary-filters {
@@ -58,10 +60,11 @@
 .primary-filters .search-wrapper {
     flex: 1;
     min-width: 200px;
+    /* Limit width on large screens */
 }
 
 .primary-filters .filter-item {
-    min-width: 15rem;
+    min-width: 14rem;
 }
 
 .more-filters-btn {
@@ -126,6 +129,8 @@
     .main-search-btn {
         width: 100%;
         min-width: 0;
+        max-width: none;
+        /* Reset max-width on mobile */
     }
 
     .more-filters-btn {
@@ -143,20 +148,19 @@
     border-radius: var(--radius);
     padding: 0 1rem;
     height: 52px;
-    /* Match select height */
-    margin-top: 0.75rem;
     /* When it appears below primary row if wrapped, or next to price select */
-    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     transition: all 0.2s ease;
 }
 
-.custom-price-container:hover,
-.custom-price-container:focus-within {
+.custom-price-container:hover {
     border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px var(--color-accent-light);
 }
 
 .custom-price-container:focus-within {
+    border-color: var(--color-accent);
     box-shadow: 0 0 0 4px var(--color-accent-light);
 }
 
@@ -167,8 +171,10 @@
 }
 
 .custom-price-input {
-    width: 100%;
-    /* Let them grow */
+    /* width: 100%; removed to prevent expansion */
+    width: 3rem;
+    flex: 1;
+    min-width: 0;
     border: none;
     background: transparent;
     font-size: 1rem;
@@ -219,15 +225,16 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--shadow);
 }
 
 .main-search-btn:hover {
-    box-shadow: 0 0 0 3px var(--color-accent-light);
+    box-shadow: 0 4px 12px rgba(230, 2, 50, 0.25);
+    transform: translateY(-1px);
 }
 
 .main-search-btn:active {
     opacity: 0.95;
+    transform: translateY(0);
 }
 
 .custom-price-close {

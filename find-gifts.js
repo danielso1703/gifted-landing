@@ -519,7 +519,7 @@ function setupEventListeners() {
       // Hide custom, show select
       if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
       if (elements.priceSelect) {
-        elements.priceSelect.style.display = 'block';
+        elements.priceSelect.style.display = '';
         elements.priceSelect.value = ''; // Reset to "Any price"
 
         // Trigger change to update state
@@ -715,10 +715,12 @@ function applyConfig(config) {
   if (isCustom) {
     priceVal = 'custom';
     if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'flex';
+    if (elements.priceSelect) elements.priceSelect.style.display = 'none';
     if (elements.customPriceMin) elements.customPriceMin.value = state.priceMin !== null ? state.priceMin : '';
     if (elements.customPriceMax) elements.customPriceMax.value = state.priceMax !== null ? state.priceMax : '';
   } else {
     if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
+    if (elements.priceSelect) elements.priceSelect.style.display = '';
     if (elements.customPriceMin) elements.customPriceMin.value = '';
     if (elements.customPriceMax) elements.customPriceMax.value = '';
   }
@@ -850,7 +852,10 @@ function goBackToTrending() {
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
-  if (elements.priceSelect) elements.priceSelect.value = '';
+  if (elements.priceSelect) {
+    elements.priceSelect.value = '';
+    elements.priceSelect.style.display = '';
+  }
   if (elements.customPriceContainer) elements.customPriceContainer.style.display = 'none';
   if (elements.customPriceMin) elements.customPriceMin.value = '';
   if (elements.customPriceMax) elements.customPriceMax.value = '';
