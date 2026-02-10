@@ -33,6 +33,14 @@ function initSupabase() {
 
 const PAGE_SIZE = 100; // Increased to support client-side filtering
 
+// All available providers
+var ALL_PROVIDERS = ['ebay', 'etsy'];
+
+function allProvidersSelected() {
+  if (!state.selectedProviders || state.selectedProviders.length === 0) return true;
+  return ALL_PROVIDERS.every(function (p) { return state.selectedProviders.indexOf(p) !== -1; });
+}
+
 // State management
 const state = {
   taxonomy: null,
@@ -42,6 +50,7 @@ const state = {
   selectedRecipient: null,
   selectedAge: null,
   selectedGender: null,
+  selectedProviders: ['ebay', 'etsy'],
   clusters: [],
   selectedCluster: null,
   subClusters: [],
@@ -75,6 +84,7 @@ const elements = {
   createRecipient: null,
   createAge: null,
   createGender: null,
+  providerFilters: null,
   priceSelect: null,
   customPriceContainer: null,
   customPriceMin: null,
@@ -93,6 +103,14 @@ const elements = {
   searchSuggestions: null,
   moreFiltersBtn: null
 };
+
+// Derive provider/marketplace from item URL
+function getProvider(url) {
+  if (!url) return 'unknown';
+  if (/ebay\.(com|ca|co\.uk)/i.test(url)) return 'ebay';
+  if (/etsy\.com/i.test(url)) return 'etsy';
+  return 'other';
+}
 
 function parseNumber(value) {
   if (value === undefined || value === null || value === '') return null;
@@ -148,6 +166,7 @@ function readQueryConfig() {
   var cluster = params.get('cluster') || params.get('topic') || null;
   var subCluster = params.get('sub_cluster') || params.get('subcluster') || params.get('area') || null;
   var category = params.get('category') || null;
+  var provider = params.get('provider') ? params.get('provider').split(',').filter(Boolean) : [];
   var budget = params.get('budget') || null;
   var priceMin = parseNumber(params.get('price_min') || params.get('min') || params.get('priceMin') || params.get('minPrice'));
   var priceMax = parseNumber(params.get('price_max') || params.get('max') || params.get('priceMax') || params.get('maxPrice'));
@@ -172,6 +191,7 @@ function readQueryConfig() {
     cluster ||
     subCluster ||
     category ||
+    provider ||
     priceMin !== null ||
     priceMax !== null
   );
@@ -184,6 +204,7 @@ function readQueryConfig() {
     cluster: cluster,
     subCluster: subCluster,
     category: category,
+    provider: provider,
     priceMin: priceMin,
     priceMax: priceMax
   };
@@ -204,6 +225,9 @@ document.addEventListener('DOMContentLoaded', function () {
   elements.customPriceApply = document.getElementById('custom-price-apply');
   elements.dynamicSubtitle = document.getElementById('dynamic-subtitle');
   elements.searchInput = document.getElementById('search-input');
+  elements.providerTrigger = document.getElementById('provider-trigger');
+  elements.providerMenu = document.getElementById('provider-menu');
+  elements.providerCheckboxes = document.querySelectorAll('.provider-check');
   elements.clusterSelect = document.getElementById('cluster-select');
   elements.subClusterSelect = document.getElementById('sub-cluster-select');
   elements.categorySelect = document.getElementById('category-select');
@@ -466,6 +490,109 @@ function setupEventListeners() {
     });
   }
 
+  // Provider Dropdown Logic
+  if (elements.providerTrigger && elements.providerMenu) {
+    // Toggle menu
+    elements.providerTrigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isHidden = elements.providerMenu.hidden;
+      elements.providerMenu.hidden = !isHidden;
+      elements.providerTrigger.setAttribute('aria-expanded', !isHidden);
+    });
+
+    // Close on click outside
+    document.addEventListener('click', function (e) {
+      if (!elements.providerTrigger.contains(e.target) && !elements.providerMenu.contains(e.target)) {
+        elements.providerMenu.hidden = true;
+        elements.providerTrigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Stop propagation on menu click
+    elements.providerMenu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+  }
+
+  // Select All Logic
+  var selectAllBtn = document.getElementById('provider-select-all');
+  if (selectAllBtn) {
+    selectAllBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      state.selectedProviders = ALL_PROVIDERS.slice();
+      if (elements.providerCheckboxes) {
+        elements.providerCheckboxes.forEach(function (cb) { cb.checked = true; });
+      }
+      updateProviderTriggerText();
+
+      elements.providerMenu.hidden = true;
+      elements.providerTrigger.setAttribute('aria-expanded', 'false');
+
+      // Reload items but keep secondary filters visible
+      state.page = 0;
+      state.items = [];
+      updateTrendingLabel();
+      setFiltersVisibility();
+      loadClusters();
+      hideEmptyState();
+      if (hasActiveFilters()) {
+        state.isDefaultView = false;
+        loadItems();
+      } else {
+        state.isDefaultView = true;
+        loadDefaultView();
+      }
+    });
+  }
+
+  // Provider Checkboxes Logic
+  if (elements.providerCheckboxes) {
+    elements.providerCheckboxes.forEach(function (checkbox) {
+      checkbox.addEventListener('change', function () {
+        var val = checkbox.value;
+        if (checkbox.checked) {
+          if (state.selectedProviders.indexOf(val) === -1) {
+            state.selectedProviders.push(val);
+          }
+        } else {
+          // Prevent unchecking if it's the last one — min 1 must stay selected
+          if (state.selectedProviders.length <= 1) {
+            checkbox.checked = true; // Revert
+            return;
+          }
+
+          var idx = state.selectedProviders.indexOf(val);
+          if (idx !== -1) {
+            state.selectedProviders.splice(idx, 1);
+          }
+        }
+
+        updateProviderTriggerText();
+
+        if (hasActiveFilters()) {
+          state.isDefaultView = false;
+          state.page = 0;
+          state.items = [];
+          updateTrendingLabel();
+          setFiltersVisibility();
+          loadClusters();
+          hideEmptyState();
+          loadItems();
+        } else {
+          // Reload without collapsing secondary filters
+          state.isDefaultView = true;
+          state.page = 0;
+          state.items = [];
+          updateTrendingLabel();
+          setFiltersVisibility();
+          loadClusters();
+          hideEmptyState();
+          loadDefaultView();
+        }
+      });
+    });
+  }
+
   if (elements.priceSelect) {
     elements.priceSelect.addEventListener('change', function (e) {
       var val = e.target.value;
@@ -616,6 +743,7 @@ function hasActiveFilters() {
     state.selectedRecipient ||
     state.selectedAge ||
     state.selectedGender ||
+    (state.selectedProviders && state.selectedProviders.length > 0 && !allProvidersSelected()) ||
     state.selectedCluster ||
     state.selectedSubCluster ||
     state.selectedCategory ||
@@ -684,6 +812,7 @@ function applyConfig(config) {
   state.selectedCluster = config.cluster || null;
   state.selectedSubCluster = config.subCluster || null;
   state.selectedCategory = config.category || null;
+  state.selectedProviders = Array.isArray(config.provider) ? config.provider : (config.provider ? [config.provider] : []);
   state.searchQuery = config.search || '';
   state.priceMin = config.priceMin;
   state.priceMax = config.priceMax;
@@ -733,6 +862,7 @@ function applyConfig(config) {
   if (elements.createRecipient) elements.createRecipient.value = state.selectedRecipient || '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  // Update provider buttons state is handled in setFiltersVisibility
   if (elements.priceSelect) elements.priceSelect.value = priceVal || '';
   if (elements.clusterSelect) elements.clusterSelect.value = state.selectedCluster || '';
   if (elements.subClusterSelect) elements.subClusterSelect.value = state.selectedSubCluster || '';
@@ -749,7 +879,7 @@ function applyConfig(config) {
   setFiltersVisibility();
 
   // Auto-expand secondary filters if any are active
-  if (state.selectedAge || state.selectedGender || state.selectedCluster || state.selectedSubCluster || state.selectedCategory) {
+  if (state.selectedAge || state.selectedGender || (state.selectedProviders && state.selectedProviders.length > 0) || state.selectedCluster || state.selectedSubCluster || state.selectedCategory) {
     var secondary = document.getElementById('secondary-filters');
     if (secondary) {
       secondary.style.display = 'block';
@@ -774,6 +904,23 @@ function applyQueryConfig() {
 }
 
 // Update the Page Subtitle (Dynamic Subtitle)
+function updateProviderTriggerText() {
+  if (!elements.providerTrigger) return;
+
+  var count = state.selectedProviders ? state.selectedProviders.length : 0;
+  if (count === 0 || allProvidersSelected()) {
+    elements.providerTrigger.textContent = 'All providers';
+    elements.providerTrigger.classList.remove('has-value');
+  } else if (count === 1) {
+    var val = state.selectedProviders[0];
+    elements.providerTrigger.textContent = val === 'ebay' ? 'eBay' : (val === 'etsy' ? 'Etsy' : val);
+    elements.providerTrigger.classList.add('has-value');
+  } else {
+    elements.providerTrigger.textContent = count + ' selected';
+    elements.providerTrigger.classList.add('has-value');
+  }
+}
+
 function updateTrendingLabel() {
   if (!elements.dynamicSubtitle) return;
 
@@ -825,6 +972,15 @@ function setFiltersVisibility() {
       elements.priceSelect.classList.add('has-value');
     }
   }
+
+  // Update provider checkboxes state
+  if (elements.providerCheckboxes) {
+    elements.providerCheckboxes.forEach(function (checkbox) {
+      checkbox.checked = state.selectedProviders.indexOf(checkbox.value) !== -1;
+    });
+    updateProviderTriggerText();
+  }
+
   if (elements.clusterSelect) elements.clusterSelect.classList.toggle('has-value', !!elements.clusterSelect.value);
   if (elements.subClusterSelect) elements.subClusterSelect.classList.toggle('has-value', !!elements.subClusterSelect.value);
   if (elements.categorySelect) elements.categorySelect.classList.toggle('has-value', !!elements.categorySelect.value);
@@ -840,6 +996,7 @@ function goBackToTrending() {
   state.selectedRecipient = null;
   state.selectedAge = null;
   state.selectedGender = null;
+  state.selectedProviders = [];
   state.selectedCluster = null;
   state.selectedSubCluster = null;
   state.selectedCategory = null;
@@ -852,6 +1009,16 @@ function goBackToTrending() {
   if (elements.createRecipient) elements.createRecipient.value = '';
   if (elements.createAge) elements.createAge.value = '';
   if (elements.createGender) elements.createGender.value = '';
+  // Reset provider checkboxes to all selected
+  state.selectedProviders = ALL_PROVIDERS.slice();
+  if (elements.providerCheckboxes) {
+    elements.providerCheckboxes.forEach(function (checkbox) {
+      checkbox.checked = true;
+    });
+    updateProviderTriggerText();
+  }
+  if (elements.providerMenu) elements.providerMenu.hidden = true;
+
   if (elements.priceSelect) {
     elements.priceSelect.value = '';
     elements.priceSelect.style.display = '';
@@ -1484,6 +1651,20 @@ function updateModalContent(item) {
   document.getElementById('modal-category').textContent = category;
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-price').textContent = priceText;
+
+  // Provider badge in modal
+  var modalProvider = document.getElementById('modal-provider');
+  if (modalProvider) {
+    var prov = getProvider(giftItem.url);
+    var provLabel = prov === 'ebay' ? 'eBay' : prov === 'etsy' ? 'Etsy' : '';
+    if (provLabel) {
+      modalProvider.textContent = provLabel;
+      modalProvider.className = 'modal-provider provider-badge provider-badge--' + prov;
+      modalProvider.style.display = '';
+    } else {
+      modalProvider.style.display = 'none';
+    }
+  }
   const descriptionEl = document.getElementById('modal-description');
   const descriptionToggle = document.getElementById('modal-description-toggle');
   if (descriptionEl) {
@@ -1574,9 +1755,12 @@ function buildItemCard(item) {
   }
 
   var categoryLabel = item.category || item.sub_cluster || item.cluster || '';
+  var provider = getProvider(giftItem.url);
+  var providerLabel = provider === 'ebay' ? 'eBay' : provider === 'etsy' ? 'Etsy' : '';
+  var providerBadgeHtml = providerLabel ? '<span class="provider-badge provider-badge--' + provider + '">' + providerLabel + '</span>' : '';
   var card = document.createElement('div');
   card.className = 'item-card item-card--animate';
-  card.innerHTML = '<div class="item-image"><img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.innerHTML = '<div class="item-image">' + providerBadgeHtml + '<img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
   // Ensure link clicks don't trigger the preview modal
   var cardLinks = card.querySelectorAll('a');
@@ -1960,6 +2144,14 @@ async function loadItems() {
         if (state.priceMax !== null && val > state.priceMax) return false;
 
         return true;
+      });
+    }
+
+    // Client-side Provider Filtering (Multi-select) — skip if all selected
+    if (state.selectedProviders && state.selectedProviders.length > 0 && !allProvidersSelected()) {
+      filteredData = filteredData.filter(function (item) {
+        var p = getProvider(item.gift_items.url);
+        return state.selectedProviders.indexOf(p) !== -1;
       });
     }
 

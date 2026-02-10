@@ -1341,6 +1341,71 @@ section {
   box-shadow: 0 0 0 4px var(--color-accent-light);
 }
 
+/* Custom Dropdown Styles */
+.custom-dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  text-align: left;
+  width: 100%;
+}
+
+.dropdown-trigger[aria-expanded="true"] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-light);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dropdown-menu[hidden] {
+  display: none;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.dropdown-option:hover {
+  background-color: var(--color-surface);
+}
+
+.provider-check {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.option-text {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
 .filters-section {
   margin-bottom: 2rem;
 }
@@ -1615,6 +1680,40 @@ section {
   overflow: hidden;
   text-overflow: ellipsis;
   /* Truncate 1 line */
+}
+
+/* Provider badge (on item cards and modal) */
+.provider-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  color: #fff;
+  background: var(--color-text-muted);
+  z-index: 2;
+  pointer-events: none;
+  text-transform: none;
+  line-height: 1.4;
+}
+
+.provider-badge--ebay {
+  background: #0064d2;
+}
+
+.provider-badge--etsy {
+  background: #f1641e;
+}
+
+/* Modal provider: inline, not absolutely positioned */
+.modal-provider {
+  position: static;
+  margin-left: 0.5rem;
 }
 
 .item-price {
@@ -2582,4 +2681,23 @@ select.form-control {
 
 .no-js .skeleton-loader {
   display: grid;
+}
+
+/* Select All Button in Dropdown */
+.select-all-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.select-all-btn:hover {
+  background-color: var(--color-surface);
 }

@@ -240,6 +240,26 @@
                 </select>
               </div>
 
+              <div class="filter-item custom-dropdown" id="provider-dropdown">
+                <button type="button" class="filter-select dropdown-trigger" id="provider-trigger" aria-haspopup="true"
+                  aria-expanded="false">
+                  All providers
+                </button>
+                <div class="dropdown-menu" id="provider-menu" hidden>
+                  <button type="button" id="provider-select-all" class="select-all-btn">
+                    Select All
+                  </button>
+                  <label class="dropdown-option">
+                    <input type="checkbox" value="ebay" class="provider-check">
+                    <span class="option-text">eBay</span>
+                  </label>
+                  <label class="dropdown-option">
+                    <input type="checkbox" value="etsy" class="provider-check">
+                    <span class="option-text">Etsy</span>
+                  </label>
+                </div>
+              </div>
+
               <div class="filter-item">
                 <select id="cluster-select" class="filter-select" aria-label="Topic">
                   <option value="">All Topics</option>
@@ -375,6 +395,7 @@
         <div class="modal-details">
           <div class="modal-header">
             <span id="modal-category" class="modal-category"></span>
+            <span id="modal-provider" class="modal-provider" style="display: none;"></span>
             <h2 id="modal-title" class="modal-title"></h2>
           </div>
           <p id="modal-price" class="modal-price"></p>
