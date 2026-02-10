@@ -2060,7 +2060,7 @@ section {
   height: 100%;
   object-fit: contain;
   padding: 2rem;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.05s ease;
 }
 
 .modal-details {
@@ -2276,7 +2276,7 @@ section {
 /* Image pointer behavior */
 .modal-image {
   /* Default handled in JS */
-  transition: opacity 0.2s ease;
+  transition: opacity 0.05s ease;
 }
 
 .modal-image.has-multiple {

@@ -1882,6 +1882,33 @@ document.addEventListener('DOMContentLoaded', function () {
       showNextImage();
     });
   }
+
+  // Side-tap navigation for mobile
+  const modalContainer = modal.querySelector('.modal-container');
+  if (modalContainer) {
+    modalContainer.addEventListener('click', function (e) {
+      // Ignore if clicking image, video, nav buttons, or shop button
+      if (e.target.closest('#modal-image') ||
+        e.target.closest('#modal-video') ||
+        e.target.closest('.modal-nav-btn') ||
+        e.target.closest('.modal-close-btn') ||
+        e.target.closest('.modal-shop-btn') ||
+        e.target.closest('#modal-description-toggle')) {
+        return;
+      }
+
+      // Only on mobile screens
+      if (window.innerWidth <= 768) {
+        const rect = modalContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        if (x < rect.width / 2) {
+          showPrevItem();
+        } else {
+          showNextItem();
+        }
+      }
+    });
+  }
 });
 
 
