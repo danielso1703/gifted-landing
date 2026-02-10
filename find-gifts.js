@@ -909,7 +909,7 @@ function updateProviderTriggerText() {
 
   var count = state.selectedProviders ? state.selectedProviders.length : 0;
   if (count === 0 || allProvidersSelected()) {
-    elements.providerTrigger.textContent = 'All providers';
+    elements.providerTrigger.textContent = 'Providers';
     elements.providerTrigger.classList.remove('has-value');
   } else if (count === 1) {
     var val = state.selectedProviders[0];
