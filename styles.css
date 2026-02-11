@@ -2055,11 +2055,22 @@ section {
   min-height: 300px;
 }
 
+@media (max-width: 767px) {
+  .modal-image-wrapper {
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 50vh;
+    /* Allow it to be taller on mobile to maximize size */
+    flex: none;
+    /* Don't flex grow in column mode */
+  }
+}
+
 .modal-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 2rem;
+  padding: 0;
   transition: opacity 0.05s ease;
 }
 
