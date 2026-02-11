@@ -1683,7 +1683,7 @@ function updateModalContent(item) {
       }
     });
   }
-  document.getElementById('modal-shop-btn').href = giftItem.url;
+  document.getElementById('modal-shop-btn').href = sanitizeUrl(giftItem.url);
 
   // Update pagination dots and image cursor
   const paginationContainer = document.getElementById('image-pagination');
@@ -1760,7 +1760,7 @@ function buildItemCard(item) {
   var providerBadgeHtml = providerLabel ? '<span class="provider-badge provider-badge--' + provider + '">' + providerLabel + '</span>' : '';
   var card = document.createElement('div');
   card.className = 'item-card item-card--animate';
-  card.innerHTML = '<div class="item-image">' + providerBadgeHtml + '<img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + giftItem.url + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.innerHTML = '<div class="item-image">' + providerBadgeHtml + '<img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + sanitizeUrl(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
   // Ensure link clicks don't trigger the preview modal
   var cardLinks = card.querySelectorAll('a');
@@ -2284,6 +2284,43 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Sanitize URL to ensure proper formatting for external links
+function sanitizeUrl(url) {
+  if (!url) return '';
+
+  // Rewrite eBay URLs to avoid pipe characters which browsers encode to %7C
+  // Format: .../itm/v1|ITEM_ID|VAR_ID?... -> .../itm/ITEM_ID?var=VAR_ID&...
+  // Handles both encoded (%7C) and decoded (|) pipes
+  if (url.includes('ebay.com/itm/')) {
+    // Regex to capture the ID parts. Matches v1 followed by pipe or %7C, then item ID, then pipe or %7C, then var ID
+    const match = url.match(/\/itm\/v1(?:%7C|\|)(\d+)(?:%7C|\|)(\d+)(\?.*)?$/);
+    if (match) {
+      const itemId = match[1];
+      const varId = match[2];
+      const queryParams = match[3] || ''; // Includes '?'
+
+      // Construct new safe URL
+      let newUrl = 'https://www.ebay.com/itm/' + itemId + '?var=' + varId;
+
+      // Append existing query params (removing the leading ? if we already added it)
+      if (queryParams) {
+        // If queryParams starts with ?, change it to & to append to our new param
+        newUrl += queryParams.replace('?', '&');
+      }
+
+      return newUrl;
+    }
+  }
+
+  // Fallback: Fix other pipe encoding issues if the regex didn't match
+  if (url.includes('ebay.com') && (url.includes('%7C') || url.includes('%7c'))) {
+    const newUrl = url.replace(/%7C/gi, '|');
+    return newUrl;
+  }
+
+  return url;
 }
 
 // Skeleton card HTML for grid loading animation
