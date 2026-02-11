@@ -1760,7 +1760,7 @@ function buildItemCard(item) {
   var providerBadgeHtml = providerLabel ? '<span class="provider-badge provider-badge--' + provider + '">' + providerLabel + '</span>' : '';
   var card = document.createElement('div');
   card.className = 'item-card item-card--animate';
-  card.innerHTML = '<div class="item-image">' + providerBadgeHtml + '<img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + escapeHtml(giftItem.url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
+  card.innerHTML = '<div class="item-image">' + providerBadgeHtml + '<img src="' + imageUrl + '" alt="' + escapeHtml(title) + '" loading="lazy"></div><div class="item-content"><h3 class="item-title">' + escapeHtml(title) + '</h3>' + (categoryLabel ? '<p class="item-category">' + escapeHtml(categoryLabel) + '</p>' : '') + '<p class="item-price">' + escapeHtml(priceText) + '</p><a href="' + giftItem.url + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a></div>';
 
   // Ensure link clicks don't trigger the preview modal
   var cardLinks = card.querySelectorAll('a');
