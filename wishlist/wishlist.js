@@ -67,8 +67,14 @@
 
     if (titleEl) {
       titleEl.textContent = data.wishlistName || 'Wishlist';
-      document.title = (data.wishlistName || 'Wishlist') + ' — Top Notch Gifts';
     }
+    var pageTitleBase;
+    if (data.ownerName) {
+      pageTitleBase = data.ownerName + "'s Wishlist";
+    } else {
+      pageTitleBase = data.wishlistName || 'Wishlist';
+    }
+    document.title = pageTitleBase + ' — Top Notch Gifts';
     if (ownerEl) {
       if (data.ownerName) {
         ownerEl.textContent = 'Wishlist by ' + data.ownerName;
@@ -605,8 +611,18 @@
 
     var prevBtn = document.querySelector('.modal-prev-btn');
     var nextBtn = document.querySelector('.modal-next-btn');
-    if (prevBtn) prevBtn.addEventListener('click', showPrevItem);
-    if (nextBtn) nextBtn.addEventListener('click', showNextItem);
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        showPrevItem();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        showNextItem();
+      });
+    }
 
     var modalImageEl = document.getElementById('modal-image');
     if (modalImageEl) {
@@ -623,6 +639,57 @@
         var isExpanded = descriptionEl.classList.toggle('is-expanded');
         descriptionToggle.textContent = isExpanded ? 'Less' : 'More';
         descriptionToggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+      });
+    }
+
+    // Swipe navigation for mobile: move between gifts
+    var touchStartX = 0;
+    var touchEndX = 0;
+
+    modal.addEventListener('touchstart', function (e) {
+      if (!modal.classList.contains('is-open')) return;
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    modal.addEventListener('touchend', function (e) {
+      if (!modal.classList.contains('is-open')) return;
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      touchEndX = e.changedTouches[0].screenX;
+      var swipeThreshold = 50;
+      if (touchEndX < touchStartX - swipeThreshold) {
+        showNextItem();
+      } else if (touchEndX > touchStartX + swipeThreshold) {
+        showPrevItem();
+      }
+    }, { passive: true });
+
+    // Side-tap navigation for mobile: tap left/right half of modal container
+    var modalContainer = modal.querySelector('.modal-container');
+    if (modalContainer) {
+      modalContainer.addEventListener('click', function (e) {
+        if (!modal.classList.contains('is-open')) return;
+
+        // Ignore clicks on primary interactive elements
+        if (e.target.closest('#modal-image') ||
+          e.target.closest('#modal-video') ||
+          e.target.closest('.modal-nav-btn') ||
+          e.target.closest('.modal-close-btn') ||
+          e.target.closest('.modal-shop-btn') ||
+          e.target.closest('#modal-description-toggle')) {
+          return;
+        }
+
+        // Only enable on mobile-ish widths
+        if (window.innerWidth <= 768) {
+          var rect = modalContainer.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          if (x < rect.width / 2) {
+            showPrevItem();
+          } else {
+            showNextItem();
+          }
+        }
       });
     }
 
