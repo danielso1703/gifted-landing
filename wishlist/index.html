@@ -108,41 +108,62 @@
       <!-- Success: wishlist content -->
       <div id="wishlist-content" class="wishlist-state" style="display: none;" aria-live="polite">
         <section class="wishlist-hero">
+          <div class="wishlist-hero-orb wishlist-hero-orb--1" aria-hidden="true"></div>
+          <div class="wishlist-hero-orb wishlist-hero-orb--2" aria-hidden="true"></div>
           <h1 id="wishlist-title" class="wishlist-title">Wishlist</h1>
-          <p id="wishlist-owner" class="wishlist-owner" style="display: none;"></p>
         </section>
 
         <section class="wishlist-section">
           <header class="wishlist-section-header">
-            <h2 class="wishlist-section-title">Gifts</h2>
+            <h2 class="wishlist-section-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+                style="vertical-align: -2px; margin-right: 0.35rem; opacity: 0.5;">
+                <rect x="3" y="8" width="18" height="4" rx="1" />
+                <path d="M12 8v13" />
+                <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+                <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
+              </svg>
+              Gift Ideas
+            </h2>
+            <span class="wishlist-item-count" id="wishlist-item-count"></span>
           </header>
           <div id="wishlist-gifts" class="items-grid"></div>
         </section>
 
         <div id="wishlist-empty" class="wishlist-empty" style="display: none;">
+          <svg class="wishlist-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="8" width="18" height="4" rx="1"></rect>
+            <path d="M12 8v13"></path>
+            <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"></path>
+            <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"></path>
+          </svg>
           <p class="wishlist-empty-title">No gifts added yet</p>
           <p class="wishlist-empty-text">
             This wishlist doesn&apos;t have any items yet. Browse ideas on
             <a href="/find-gifts/">Top Notch Gifts</a> or create your own list in the Gifted app.
           </p>
         </div>
-        <section id="wishlist-cta" class="wishlist-cta">
-          <div class="wishlist-cta-content">
-            <div class="wishlist-cta-text">
-              <span class="wishlist-cta-pill">Coming soon</span>
-              <h2 class="wishlist-cta-heading">The app is coming soon</h2>
-              <p class="wishlist-cta-body">
-                We&apos;re building a native experience for iOS and Android to make gift discovery even smoother.
-                Get notified when we launch.
-              </p>
-              <div class="wishlist-cta-actions">
-                <a href="https://giftedapp.io" target="_blank" rel="noopener" class="wishlist-cta-button">
-                  Join the beta
-                </a>
-              </div>
+        <section id="wishlist-cta" class="app-teaser-section">
+          <div class="app-teaser-card">
+            <div class="app-teaser-sparkles"></div>
+            <div class="app-teaser-content">
+              <span class="teaser-badge">Coming soon</span>
+              <h2>The app is coming soon</h2>
+              <p>We&apos;re building a native experience for iOS and Android to make gift discovery even smoother.
+                Get notified when we launch.</p>
+              <a href="/contact/?subject=Join%20app%20beta&message=Hi%2C%20I%27d%20like%20to%20join%20the%20app%27s%20beta"
+                class="app-cta-btn">
+                Join the beta
+              </a>
             </div>
-            <div class="wishlist-cta-icon" aria-hidden="true">
-              <div class="wishlist-cta-icon-inner"></div>
+            <div class="app-teaser-visual">
+              <picture>
+                <source srcset="/Assets/ios_logo.webp" type="image/webp">
+                <img src="/Assets/ios_logo.png" alt="Top Notch Gifts App Icon" class="app-teaser-img" width="180"
+                  height="180" loading="lazy">
+              </picture>
             </div>
           </div>
         </section>

@@ -60,13 +60,18 @@
     setVisible('wishlist-content', true);
 
     var titleEl = document.getElementById('wishlist-title');
-    var ownerEl = document.getElementById('wishlist-owner');
     var giftsEl = document.getElementById('wishlist-gifts');
     var emptyEl = document.getElementById('wishlist-empty');
     var ctaEl = document.getElementById('wishlist-cta');
+    var itemCountEl = document.getElementById('wishlist-item-count');
 
+    // Set hero title: "Name's Wishlist"
     if (titleEl) {
-      titleEl.textContent = data.wishlistName || 'Wishlist';
+      if (data.ownerName) {
+        titleEl.textContent = data.ownerName + '\u2019s Wishlist';
+      } else {
+        titleEl.textContent = data.wishlistName || 'Wishlist';
+      }
     }
     var pageTitleBase;
     if (data.ownerName) {
@@ -74,18 +79,20 @@
     } else {
       pageTitleBase = data.wishlistName || 'Wishlist';
     }
-    document.title = pageTitleBase + ' — Top Notch Gifts';
-    if (ownerEl) {
-      if (data.ownerName) {
-        ownerEl.textContent = 'Wishlist by ' + data.ownerName;
-        ownerEl.style.display = '';
-      } else {
-        ownerEl.style.display = 'none';
-      }
-    }
+    document.title = pageTitleBase + ' \u2014 Top Notch Gifts';
 
     var gifts = data.gifts || [];
     wishlistGifts = gifts;
+
+    // Show item count in section header
+    if (itemCountEl) {
+      if (gifts.length > 0) {
+        itemCountEl.textContent = gifts.length + ' item' + (gifts.length !== 1 ? 's' : '');
+      } else {
+        itemCountEl.textContent = '';
+      }
+    }
+
     if (giftsEl) {
       giftsEl.innerHTML = '';
       if (gifts.length === 0) {
@@ -465,6 +472,7 @@
 
     var card = document.createElement('div');
     card.className = 'item-card item-card--animate';
+    card.style.setProperty('--delay', (index * 80) + 'ms');
     card.innerHTML =
       '<div class="item-image">' + providerBadgeHtml + imgHtml + '</div>' +
       '<div class="item-content">' +
