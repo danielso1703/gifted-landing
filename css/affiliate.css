@@ -354,3 +354,52 @@
     color: var(--color-text);
     background-color: rgba(0, 0, 0, 0.05);
 }
+
+/* Public wishlist page */
+.wishlist-owner {
+    margin: 0 0 1rem;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+}
+
+.wishlist-empty {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.wishlist-cta {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+    font-size: 0.9375rem;
+    color: var(--color-text-muted);
+}
+
+.wishlist-cta a {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.wishlist-loading-text {
+    margin: 0 0 1rem;
+    color: var(--color-text-muted);
+}
+
+.wishlist-error-text {
+    margin: 0 0 1rem;
+    color: var(--color-text-muted);
+}
+
+.wishlist-card-no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 140px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}

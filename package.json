@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Static public landing page for Top Notch Gifts",
     "scripts": {
+        "start": "npx serve .",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",

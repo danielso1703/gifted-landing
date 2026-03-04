@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found — Top Notch Gifts</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var match = path.match(/\/wishlist\/([^/]+)$/);
+      if (match) {
+        var base = path.replace(/\/wishlist\/[^/]+$/, '') || '';
+        window.location.replace(base + '/wishlist/#' + match[1]);
+      }
+    })();
+  </script>
+</head>
+<body class="page">
+  <div id="not-found-content">
+    <header class="site-header">
+      <div class="container">
+        <a href="/" class="logo-link">
+          <img src="/Assets/best-large-fill-2.png" alt="" class="logo-img" width="40" height="40">
+          <span>Top Notch Gifts</span>
+        </a>
+        <nav class="nav-links">
+          <a href="/">Home</a>
+          <a href="/find-gifts/">Find Gifts</a>
+          <a href="/about/">About</a>
+          <a href="/contact/">Contact</a>
+        </nav>
+      </div>
+    </header>
+    <main class="page-main" style="padding: 3rem 1.5rem; text-align: center;">
+      <div class="container" style="max-width: 480px;">
+        <h1 style="margin-bottom: 0.5rem;">Page not found</h1>
+        <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">The page you’re looking for doesn’t exist or has been moved.</p>
+        <a href="/" class="item-shop-btn" style="display: inline-block; width: auto; padding: 0.75rem 1.5rem; text-decoration: none;">Go to Top Notch Gifts</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

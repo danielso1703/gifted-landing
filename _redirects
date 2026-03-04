@@ -1,0 +1,2 @@
+# Serve wishlist page for any token so client can read token from path
+/wishlist/*  /wishlist/index.html  200

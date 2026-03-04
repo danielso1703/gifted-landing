@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<script>document.documentElement.classList.remove('no-js');</script>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/Assets/best-large-fill-2.png">
+  <link rel="apple-touch-icon" href="/Assets/best-large-fill-2.png">
+  <title>Wishlist — Top Notch Gifts</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/css/affiliate.css">
+</head>
+
+<body class="page page-wishlist">
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="logo-link">
+        <picture>
+          <source srcset="/Assets/best-large-fill-2.webp" type="image/webp">
+          <img src="/Assets/best-large-fill-2.png" alt="" class="logo-img" width="40" height="40">
+        </picture>
+        <span>Top Notch Gifts</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/find-gifts/">Find Gifts</a>
+        <a href="/about/">About</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+        <a href="/contact/">Contact</a>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Open menu" aria-expanded="false">
+        <span></span>
+      </button>
+    </div>
+    <nav class="mobile-nav" aria-hidden="true">
+      <a href="/">Home</a>
+      <a href="/find-gifts/">Find Gifts</a>
+      <a href="/about/">About</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+  </header>
+
+  <main class="page-main">
+    <div class="container wishlist-container">
+      <!-- Loading state -->
+      <div id="wishlist-loading" class="wishlist-state" aria-live="polite">
+        <p class="wishlist-loading-text">Loading wishlist…</p>
+        <div class="items-grid items-grid--loading" aria-hidden="true">
+          <div class="item-card item-card--skeleton">
+            <div class="item-image"></div>
+            <div class="item-content">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-btn"></div>
+            </div>
+          </div>
+          <div class="item-card item-card--skeleton">
+            <div class="item-image"></div>
+            <div class="item-content">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-btn"></div>
+            </div>
+          </div>
+          <div class="item-card item-card--skeleton">
+            <div class="item-image"></div>
+            <div class="item-content">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-btn"></div>
+            </div>
+          </div>
+          <div class="item-card item-card--skeleton">
+            <div class="item-image"></div>
+            <div class="item-content">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-btn"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error / unavailable state -->
+      <div id="wishlist-error" class="wishlist-state wishlist-state--error" style="display: none;" aria-live="polite">
+        <div class="page-header">
+          <h1>Wishlist unavailable</h1>
+          <p class="wishlist-error-text">This wishlist is no longer available or the link may have expired.</p>
+          <p><a href="/find-gifts/">Browse gifts</a> or <a href="/">go to Top Notch Gifts</a>.</p>
+        </div>
+      </div>
+
+      <!-- Success: wishlist content -->
+      <div id="wishlist-content" class="wishlist-state" style="display: none;" aria-live="polite">
+        <div class="page-header">
+          <h1 id="wishlist-title">Wishlist</h1>
+          <p id="wishlist-owner" class="wishlist-owner" style="display: none;"></p>
+        </div>
+        <div id="wishlist-gifts" class="items-grid"></div>
+        <div id="wishlist-empty" class="wishlist-empty" style="display: none;">
+          <p>No gifts added yet.</p>
+        </div>
+        <div id="wishlist-cta" class="wishlist-cta">
+          <p>Get the <a href="https://giftedapp.io" target="_blank" rel="noopener">Gifted app</a> to create your own wishlist.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid container">
+      <div class="footer-section">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="/#how-it-works">How it works</a></li>
+          <li><a href="/#features">Features</a></li>
+          <li><a href="/find-gifts/">Find Gifts</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/privacy/">Privacy Policy</a></li>
+          <li><a href="/affiliate-disclosure/">Affiliate Disclosure</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="/contact/">Contact Us</a></li>
+          <li><a href="mailto:team@topnotchgifts.ca">team@topnotchgifts.ca</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Top Notch Gifts — Gift search and discovery. &copy; <span id="year">2025</span>.
+        <a href="/privacy/">Privacy</a> · <a href="/affiliate-disclosure/">Affiliate Disclosure</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/config.js"></script>
+  <script src="/wishlist/wishlist.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    (function () {
+      var menuBtn = document.querySelector('.mobile-menu-btn');
+      var mobileNav = document.querySelector('.mobile-nav');
+      if (!menuBtn || !mobileNav) return;
+
+      function toggleMenu() {
+        var isOpen = mobileNav.classList.toggle('is-open');
+        menuBtn.classList.toggle('is-open', isOpen);
+        menuBtn.setAttribute('aria-expanded', isOpen);
+        mobileNav.setAttribute('aria-hidden', !isOpen);
+        document.body.classList.toggle('mobile-nav-open', isOpen);
+      }
+
+      menuBtn.addEventListener('click', toggleMenu);
+      mobileNav.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          if (mobileNav.classList.contains('is-open')) toggleMenu();
+        });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) toggleMenu();
+      });
+    })();
+  </script>
+</body>
+
+</html>
