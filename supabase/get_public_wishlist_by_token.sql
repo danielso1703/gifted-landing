@@ -42,28 +42,14 @@ BEGIN
   WHERE up.user_id = search_row.user_id
   LIMIT 1;
 
-  -- Gifts array: image supports first element as object with url, or as string URL, or image_url
-  SELECT json_agg(json_build_object(
-    'id', gi.id,
-    'title', COALESCE(gi.local_title, gi.title, ''),
-    'price', gi.price,
-    'price_amount', gi.price_amount,
-    'price_currency', gi.price_currency,
-    'image', CASE
-      WHEN jsonb_typeof(gi.images) = 'array' AND jsonb_array_length(gi.images) > 0
-      THEN COALESCE(gi.images->0->>'url', gi.images->>0, gi.image_url)
-      ELSE gi.image_url
-    END,
-    'url', gi.url,
-    'marketplace', gi.marketplace
-  ))
+  -- Return only gift item IDs; client fetches full gift_items via get_public_gift_items_by_ids
+  SELECT json_agg(sg.gift_item_id ORDER BY sg.created_at NULLS LAST)
   INTO gifts_json
   FROM saved_gifts sg
-  JOIN gift_items gi ON gi.id = sg.gift_item_id
   WHERE sg.search_id = link_row.search_id
     AND sg.deleted_at IS NULL;
 
-  -- Build result with wishlist name and gifts
+  -- Build result: wishlist metadata + gift item IDs
   SELECT json_build_object(
     'wishlistName', COALESCE(
       search_row.search_params->>'wishlistName',
@@ -72,7 +58,7 @@ BEGIN
       'Wishlist'
     ),
     'ownerName', owner_name,
-    'gifts', COALESCE(gifts_json, '[]'::json)
+    'giftItemIds', COALESCE(gifts_json, '[]'::json)
   )
   INTO result;
 
@@ -81,3 +67,71 @@ END;
 $fn$;
 
 GRANT EXECUTE ON FUNCTION get_public_wishlist_by_token(text) TO anon;
+
+-- Second RPC: fetch full gift_items by IDs; only returns rows that belong to the public wishlist for that token.
+-- Call with: get_public_gift_items_by_ids(public_token, gift_item_ids) where gift_item_ids is a JSON array of UUIDs.
+CREATE OR REPLACE FUNCTION get_public_gift_items_by_ids(p_public_token text, p_gift_item_ids jsonb)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $fn2$
+DECLARE
+  token_val text := p_public_token;
+  link_row search_public_links%ROWTYPE;
+  ids_array uuid[];
+  result json;
+BEGIN
+  SELECT * INTO link_row
+  FROM search_public_links
+  WHERE search_public_links.public_token = token_val
+    AND search_public_links.is_active = true
+  LIMIT 1;
+
+  IF NOT FOUND THEN
+    RETURN '[]'::json;
+  END IF;
+
+  -- Convert JSON array of UUID strings to uuid[]
+  ids_array := ARRAY(
+    SELECT elem::uuid
+    FROM jsonb_array_elements_text(p_gift_item_ids) AS elem
+  );
+
+  -- Return full gift_items only for IDs that are in saved_gifts for this wishlist (same order as IDs list).
+  -- url comes from gift_items.url (product link from DB).
+  SELECT json_agg(gift_row ORDER BY ord)
+  INTO result
+  FROM (
+    SELECT
+      ord,
+      json_build_object(
+        'id', gi.id,
+        'title', gi.title,
+        'local_title', gi.local_title,
+        'url', gi.url,
+        'image_url', gi.image_url,
+        'images', gi.images,
+        'price', gi.price,
+        'price_amount', gi.price_amount,
+        'price_currency', gi.price_currency,
+        'description', gi.description,
+        'marketplace', gi.marketplace,
+        'category', gi.category
+      ) AS gift_row
+    FROM unnest(ids_array) WITH ORDINALITY AS t(gi_id, ord)
+    JOIN gift_items gi ON gi.id = t.gi_id
+    WHERE EXISTS (
+      SELECT 1
+      FROM saved_gifts sg
+      WHERE sg.search_id = link_row.search_id
+        AND sg.gift_item_id = gi.id
+        AND sg.deleted_at IS NULL
+    )
+  ) sub;
+
+  RETURN COALESCE(result, '[]'::json);
+END;
+$fn2$;
+
+GRANT EXECUTE ON FUNCTION get_public_gift_items_by_ids(text, jsonb) TO anon;

@@ -150,6 +150,58 @@
     </div>
   </footer>
 
+  <!-- Product Preview Modal (same structure as find-gifts) -->
+  <div id="product-modal" class="modal" aria-hidden="true" style="display: none;">
+    <div class="modal-overlay" tabindex="-1" data-close="true"></div>
+    <div class="modal-container" role="dialog" aria-modal="true">
+      <button type="button" class="modal-close-btn" aria-label="Close modal" data-close="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <button type="button" class="modal-nav-btn modal-prev-btn" aria-label="Previous item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+
+      <button type="button" class="modal-nav-btn modal-next-btn" aria-label="Next item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+
+      <div class="modal-content">
+        <div class="modal-image-wrapper">
+          <img id="modal-image" src="" alt="" class="modal-image">
+          <video id="modal-video" class="modal-image" controls autoplay loop muted playsinline
+            style="display: none;"></video>
+          <div id="image-pagination" class="image-pagination"></div>
+        </div>
+        <div class="modal-details">
+          <div class="modal-header">
+            <span id="modal-category" class="modal-category"></span>
+            <span id="modal-provider" class="modal-provider" style="display: none;"></span>
+            <h2 id="modal-title" class="modal-title"></h2>
+          </div>
+          <p id="modal-price" class="modal-price"></p>
+          <div id="modal-description" class="modal-description"></div>
+          <button type="button" id="modal-description-toggle" class="modal-description-toggle" style="display: none;">
+            More
+          </button>
+          <div class="modal-actions">
+            <a id="modal-shop-btn" href="#" target="_blank" rel="noopener" class="modal-shop-btn">Shop Now</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/config.js"></script>
   <script src="/wishlist/wishlist.js"></script>

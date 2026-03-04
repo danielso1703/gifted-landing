@@ -2269,6 +2269,63 @@ section {
   pointer-events: none;
 }
 
+.image-pagination .modal-image-gallery {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.image-pagination .modal-image-prev,
+.image-pagination .modal-image-next {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-pagination .modal-image-prev:hover,
+.image-pagination .modal-image-next:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.image-pagination .modal-image-label {
+  font-size: 0.875rem;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.image-pagination .modal-image-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.image-pagination .modal-image-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.image-pagination .modal-image-dot.is-active {
+  background: var(--color-accent, #e63946);
+  transform: scale(1.2);
+}
+
 .pagination-dot {
   width: 8px;
   height: 8px;
