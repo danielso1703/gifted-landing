@@ -94,6 +94,7 @@
     if (ctaEl) ctaEl.style.display = '';
   }
 
+
   function setVisible(id, visible) {
     var el = document.getElementById(id);
     if (el) el.style.display = visible ? '' : 'none';
@@ -291,38 +292,6 @@
     }, 300);
   }
 
-  function setModalImageAndDots() {
-    var gift = currentModalList[currentModalIndex];
-    if (!gift) return;
-    var urls = gift._imageUrls;
-    var modalImage = document.getElementById('modal-image');
-    if (!modalImage) return;
-    var idx = currentModalImageIndex;
-    if (urls && urls.length > 0 && idx >= 0 && idx < urls.length) {
-      modalImage.src = urls[idx];
-    } else {
-      modalImage.src = getImageUrl(gift);
-    }
-    modalImage.onerror = function () {
-      this.src = PLACEHOLDER_IMAGE_SVG;
-      this.onerror = null;
-    };
-    var pagination = document.getElementById('image-pagination');
-    if (pagination) {
-      var dots = pagination.querySelectorAll('.modal-image-dot');
-      for (var d = 0; d < dots.length; d++) {
-        dots[d].setAttribute('aria-current', d === idx ? 'true' : 'false');
-        dots[d].classList.toggle('is-active', d === idx);
-      }
-      var label = pagination.querySelector('.modal-image-label');
-      if (label && urls && urls.length > 1) label.textContent = (idx + 1) + ' of ' + urls.length;
-      var imgPrev = pagination.querySelector('.modal-image-prev');
-      var imgNext = pagination.querySelector('.modal-image-next');
-      if (imgPrev) imgPrev.style.display = (urls && urls.length > 1 && idx > 0) ? '' : 'none';
-      if (imgNext) imgNext.style.display = (urls && urls.length > 1 && idx < urls.length - 1) ? '' : 'none';
-    }
-  }
-
   function updateModalContent(gift) {
     var title = (gift.local_title || gift.title || 'Gift').trim();
     var priceText = formatPrice(gift) || 'View price';
@@ -338,19 +307,38 @@
 
     var modalImage = document.getElementById('modal-image');
     var modalVideo = document.getElementById('modal-video');
-    if (modalImage) {
-      modalImage.style.display = 'block';
-      modalImage.src = imageUrl;
-      modalImage.alt = title;
-      modalImage.onerror = function () {
-        this.src = PLACEHOLDER_IMAGE_SVG;
-        this.onerror = null;
-      };
-    }
-    if (modalVideo) {
-      modalVideo.style.display = 'none';
-      modalVideo.pause();
-      modalVideo.src = '';
+    var isVideo = typeof imageUrl === 'string' && /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(imageUrl);
+
+    if (isVideo) {
+      if (modalImage) {
+        modalImage.style.display = 'none';
+      }
+      if (modalVideo) {
+        modalVideo.style.display = 'block';
+        modalVideo.src = imageUrl;
+        modalVideo.load();
+        var playPromise = modalVideo.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.catch(function () {
+            // Autoplay might be blocked; ignore.
+          });
+        }
+      }
+    } else {
+      if (modalVideo) {
+        modalVideo.style.display = 'none';
+        modalVideo.pause();
+        modalVideo.src = '';
+      }
+      if (modalImage) {
+        modalImage.style.display = 'block';
+        modalImage.src = imageUrl || PLACEHOLDER_IMAGE_SVG;
+        modalImage.alt = title;
+        modalImage.onerror = function () {
+          this.src = PLACEHOLDER_IMAGE_SVG;
+          this.onerror = null;
+        };
+      }
     }
 
     var categoryEl = document.getElementById('modal-category');
@@ -398,57 +386,20 @@
     var pagination = document.getElementById('image-pagination');
     if (pagination) {
       pagination.innerHTML = '';
-      if (urls && urls.length > 1) {
-        var wrap = document.createElement('div');
-        wrap.className = 'modal-image-gallery';
-        var imgPrev = document.createElement('button');
-        imgPrev.type = 'button';
-        imgPrev.className = 'modal-image-prev';
-        imgPrev.setAttribute('aria-label', 'Previous image');
-        imgPrev.innerHTML = '&#9664;';
-        imgPrev.style.display = currentModalImageIndex > 0 ? '' : 'none';
-        var imgNext = document.createElement('button');
-        imgNext.type = 'button';
-        imgNext.className = 'modal-image-next';
-        imgNext.setAttribute('aria-label', 'Next image');
-        imgNext.innerHTML = '&#9654;';
-        imgNext.style.display = currentModalImageIndex < urls.length - 1 ? '' : 'none';
-        var label = document.createElement('span');
-        label.className = 'modal-image-label';
-        label.textContent = (currentModalImageIndex + 1) + ' of ' + urls.length;
-        var dotsWrap = document.createElement('div');
-        dotsWrap.className = 'modal-image-dots';
+    }
+    if (modalImage) {
+      modalImage.classList.remove('has-multiple');
+    }
+    if (urls && urls.length > 1) {
+      if (modalImage) {
+        modalImage.classList.add('has-multiple');
+      }
+      if (pagination) {
         for (var i = 0; i < urls.length; i++) {
-          var dot = document.createElement('button');
-          dot.type = 'button';
-          dot.className = 'modal-image-dot' + (i === currentModalImageIndex ? ' is-active' : '');
-          dot.setAttribute('aria-label', 'Image ' + (i + 1));
-          dot.setAttribute('aria-current', i === currentModalImageIndex ? 'true' : 'false');
-          (function (j) {
-            dot.addEventListener('click', function () {
-              currentModalImageIndex = j;
-              setModalImageAndDots();
-            });
-          })(i);
-          dotsWrap.appendChild(dot);
+          var dot = document.createElement('div');
+          dot.className = 'pagination-dot' + (i === currentModalImageIndex ? ' is-active' : '');
+          pagination.appendChild(dot);
         }
-        wrap.appendChild(imgPrev);
-        wrap.appendChild(label);
-        wrap.appendChild(dotsWrap);
-        wrap.appendChild(imgNext);
-        pagination.appendChild(wrap);
-        imgPrev.addEventListener('click', function () {
-          if (currentModalImageIndex > 0) {
-            currentModalImageIndex--;
-            setModalImageAndDots();
-          }
-        });
-        imgNext.addEventListener('click', function () {
-          if (currentModalImageIndex < urls.length - 1) {
-            currentModalImageIndex++;
-            setModalImageAndDots();
-          }
-        });
       }
     }
   }
@@ -456,6 +407,14 @@
   var currentModalList = [];
   var currentModalIndex = 0;
   var currentModalImageIndex = 0;
+
+  function showNextImage() {
+    if (!currentModalList || currentModalList.length === 0) return;
+    var gift = currentModalList[currentModalIndex];
+    if (!gift || !gift._imageUrls || gift._imageUrls.length <= 1) return;
+    currentModalImageIndex = (currentModalImageIndex + 1) % gift._imageUrls.length;
+    updateModalContent(gift);
+  }
 
   function showPrevItem() {
     if (currentModalIndex <= 0) return;
@@ -495,7 +454,7 @@
     var imgHtml = '<img src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(title) + '" loading="lazy">';
 
     var shopHtml = url
-      ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="item-shop-btn">View</a>'
+      ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="item-shop-btn">Shop</a>'
       : '';
 
     var card = document.createElement('div');
@@ -516,6 +475,7 @@
     }
 
     card.addEventListener('click', function (e) {
+      if (card.closest('.items-grid') && card.closest('.items-grid').classList.contains('prevent-click')) return;
       if (e.target.closest('a')) return;
       openModal(gift, list, index);
     });
@@ -647,6 +607,14 @@
     var nextBtn = document.querySelector('.modal-next-btn');
     if (prevBtn) prevBtn.addEventListener('click', showPrevItem);
     if (nextBtn) nextBtn.addEventListener('click', showNextItem);
+
+    var modalImageEl = document.getElementById('modal-image');
+    if (modalImageEl) {
+      modalImageEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        showNextImage();
+      });
+    }
 
     var descriptionToggle = document.getElementById('modal-description-toggle');
     var descriptionEl = document.getElementById('modal-description');

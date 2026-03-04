@@ -92,26 +92,60 @@
 
       <!-- Error / unavailable state -->
       <div id="wishlist-error" class="wishlist-state wishlist-state--error" style="display: none;" aria-live="polite">
-        <div class="page-header">
-          <h1>Wishlist unavailable</h1>
-          <p class="wishlist-error-text">This wishlist is no longer available or the link may have expired.</p>
-          <p><a href="/find-gifts/">Browse gifts</a> or <a href="/">go to Top Notch Gifts</a>.</p>
+        <div class="wishlist-error-card">
+          <div class="wishlist-error-icon" aria-hidden="true">!</div>
+          <div class="wishlist-error-body">
+            <h1 class="wishlist-error-title">Wishlist unavailable</h1>
+            <p class="wishlist-error-text">This wishlist is no longer available or the link may have expired.</p>
+            <div class="wishlist-error-actions">
+              <a href="/find-gifts/" class="wishlist-error-primary">Browse gifts</a>
+              <a href="/" class="wishlist-error-secondary">Back to Top Notch Gifts</a>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Success: wishlist content -->
       <div id="wishlist-content" class="wishlist-state" style="display: none;" aria-live="polite">
-        <div class="page-header">
-          <h1 id="wishlist-title">Wishlist</h1>
+        <section class="wishlist-hero">
+          <h1 id="wishlist-title" class="wishlist-title">Wishlist</h1>
           <p id="wishlist-owner" class="wishlist-owner" style="display: none;"></p>
-        </div>
-        <div id="wishlist-gifts" class="items-grid"></div>
+        </section>
+
+        <section class="wishlist-section">
+          <header class="wishlist-section-header">
+            <h2 class="wishlist-section-title">Gifts</h2>
+          </header>
+          <div id="wishlist-gifts" class="items-grid"></div>
+        </section>
+
         <div id="wishlist-empty" class="wishlist-empty" style="display: none;">
-          <p>No gifts added yet.</p>
+          <p class="wishlist-empty-title">No gifts added yet</p>
+          <p class="wishlist-empty-text">
+            This wishlist doesn&apos;t have any items yet. Browse ideas on
+            <a href="/find-gifts/">Top Notch Gifts</a> or create your own list in the Gifted app.
+          </p>
         </div>
-        <div id="wishlist-cta" class="wishlist-cta">
-          <p>Get the <a href="https://giftedapp.io" target="_blank" rel="noopener">Gifted app</a> to create your own wishlist.</p>
-        </div>
+        <section id="wishlist-cta" class="wishlist-cta">
+          <div class="wishlist-cta-content">
+            <div class="wishlist-cta-text">
+              <span class="wishlist-cta-pill">Coming soon</span>
+              <h2 class="wishlist-cta-heading">The app is coming soon</h2>
+              <p class="wishlist-cta-body">
+                We&apos;re building a native experience for iOS and Android to make gift discovery even smoother.
+                Get notified when we launch.
+              </p>
+              <div class="wishlist-cta-actions">
+                <a href="https://giftedapp.io" target="_blank" rel="noopener" class="wishlist-cta-button">
+                  Join the beta
+                </a>
+              </div>
+            </div>
+            <div class="wishlist-cta-icon" aria-hidden="true">
+              <div class="wishlist-cta-icon-inner"></div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </main>
