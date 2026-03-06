@@ -262,6 +262,7 @@
   }
 
   var wishlistGifts = [];
+  var lastModalTrigger = null;
 
   function openModal(gift, list, index) {
     currentModalList = list;
@@ -299,9 +300,16 @@
       video.currentTime = 0;
       video.src = '';
     }
+    var triggerToRestore = lastModalTrigger;
+    lastModalTrigger = null;
     setTimeout(function () {
       modal.style.display = 'none';
       document.body.style.overflow = '';
+      if (triggerToRestore && document.body.contains(triggerToRestore)) {
+        try {
+          triggerToRestore.focus();
+        } catch (err) { /* ignore */ }
+      }
     }, 300);
   }
 
@@ -473,6 +481,9 @@
     var card = document.createElement('div');
     card.className = 'item-card item-card--animate';
     card.style.setProperty('--delay', (index * 80) + 'ms');
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', 'View details: ' + title);
     card.innerHTML =
       '<div class="item-image">' + providerBadgeHtml + imgHtml + '</div>' +
       '<div class="item-content">' +
@@ -488,10 +499,21 @@
       });
     }
 
-    card.addEventListener('click', function (e) {
+    function openModalFromCard() {
       if (card.closest('.items-grid') && card.closest('.items-grid').classList.contains('prevent-click')) return;
-      if (e.target.closest('a')) return;
+      lastModalTrigger = card;
       openModal(gift, list, index);
+    }
+
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      openModalFromCard();
+    });
+
+    card.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openModalFromCard();
     });
 
     return card;
@@ -712,6 +734,27 @@
       } else if (e.key === 'ArrowRight') {
         showNextItem();
         e.preventDefault();
+      } else if (e.key === 'Tab') {
+        var container = modal.querySelector('.modal-container');
+        if (!container || !container.contains(document.activeElement)) return;
+        var focusable = modal.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        focusable = Array.prototype.slice.call(focusable).filter(function (el) {
+          return el.offsetParent !== null && (el.offsetWidth > 0 || el.offsetHeight > 0);
+        });
+        if (focusable.length === 0) return;
+        var idx = focusable.indexOf(document.activeElement);
+        if (idx === -1) return;
+        if (e.shiftKey) {
+          if (idx === 0) {
+            e.preventDefault();
+            focusable[focusable.length - 1].focus();
+          }
+        } else {
+          if (idx === focusable.length - 1) {
+            e.preventDefault();
+            focusable[0].focus();
+          }
+        }
       }
     });
   }

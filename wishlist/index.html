@@ -49,7 +49,10 @@
     <div class="container wishlist-container">
       <!-- Loading state -->
       <div id="wishlist-loading" class="wishlist-state" aria-live="polite">
-        <p class="wishlist-loading-text">Loading wishlist…</p>
+        <div class="wishlist-loading-header">
+          <span class="wishlist-loading-spinner" aria-hidden="true"></span>
+          <p class="wishlist-loading-text">Loading wishlist…</p>
+        </div>
         <div class="items-grid items-grid--loading" aria-hidden="true">
           <div class="item-card item-card--skeleton">
             <div class="item-image"></div>

@@ -454,6 +454,12 @@
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
+@media (min-width: 960px) {
+    .page-wishlist .items-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 .page-wishlist .item-card {
     border: 1px solid rgba(0, 0, 0, 0.06);
     border-radius: 16px;
@@ -590,6 +596,13 @@
     max-width: 100%;
 }
 
+/* Very small screens: tighter CTA padding so content doesn’t feel cramped */
+@media (max-width: 380px) {
+    .page-wishlist .app-teaser-card {
+        padding: 1.5rem 1rem;
+    }
+}
+
 @media (max-width: 640px) {
     .wishlist-hero {
         padding: 2rem 1.5rem 1.75rem;
@@ -643,10 +656,42 @@
 }
 
 /* ── Loading ── */
+.wishlist-loading-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.wishlist-loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-accent);
+    border-radius: 50%;
+    animation: wishlist-spinner 0.8s linear infinite;
+}
+
 .wishlist-loading-text {
-    margin: 0 0 1rem;
+    margin: 0;
     color: var(--color-text-muted);
-    text-align: center;
+    font-size: 1rem;
+}
+
+@keyframes wishlist-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wishlist-loading-spinner {
+        animation: none;
+        border-top-color: var(--color-accent);
+        opacity: 0.7;
+    }
 }
 
 /* ── Error ── */
