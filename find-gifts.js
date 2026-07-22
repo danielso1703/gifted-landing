@@ -1176,7 +1176,11 @@ function fetchItemsForRecipient(recipient, limit) {
   return supabaseClient
     .from('gift_scores')
     .select(`
-      *,
+      category,
+      sub_cluster,
+      cluster,
+      current_score,
+      created_at,
       gift_items (
         id,
         title,
@@ -1554,33 +1558,48 @@ function closeModal() {
   }, 300);
 }
 
+// Parse a possibly-stringified image list (e.g. "['url']" or a raw JSON array string) into a real array.
+function parseImageList(rawImages) {
+  if (typeof rawImages !== 'string') return rawImages;
+  try {
+    // Try JSON parse first
+    return JSON.parse(rawImages);
+  } catch (e) {
+    // If JSON fails, it might be single-quoted string "['url']" which is common in some exports
+    try {
+      if (rawImages.startsWith("['") && rawImages.endsWith("']")) {
+        return JSON.parse(rawImages.replace(/'/g, '"'));
+      }
+    } catch (e2) {
+      // fall through
+    }
+    itemsLog('warn', 'Failed to parse images string', rawImages);
+    return [];
+  }
+}
+
+// Resolve the full, ordered list of image URLs for a gift item.
+// Some providers (notably eBay) put the whole array into image_url as a
+// stringified list instead of a single URL, so image_url can't be trusted
+// blindly - always prefer the properly-typed images[] field.
+function resolveGiftImages(giftItem) {
+  let images = parseImageList(giftItem.images);
+  if (Array.isArray(images) && images.length > 0) return images;
+
+  let imageUrl = giftItem.image_url;
+  if (typeof imageUrl === 'string' && imageUrl.trim().startsWith('[')) {
+    const parsed = parseImageList(imageUrl);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  }
+  return imageUrl ? [imageUrl] : [];
+}
+
 // Update modal content
 function updateModalContent(item) {
   const giftItem = item.gift_items;
   if (!giftItem) return;
 
-  // Parse images if it's a string (e.g. "['url']") or invalid format
-  let rawImages = giftItem.images;
-  if (typeof rawImages === 'string') {
-    try {
-      // Try JSON parse first
-      rawImages = JSON.parse(rawImages);
-    } catch (e) {
-      // If JSON fails, it might be single-quoted string "['url']" which is common in some exports
-      // We can try to replace single quotes with double quotes if safe, or just regex extract
-      try {
-        if (rawImages.startsWith("['") && rawImages.endsWith("']")) {
-          rawImages = rawImages.replace(/'/g, '"');
-          rawImages = JSON.parse(rawImages);
-        }
-      } catch (e2) {
-        itemsLog('warn', 'Failed to parse images string', rawImages);
-        rawImages = [];
-      }
-    }
-  }
-
-  const images = Array.isArray(rawImages) && rawImages.length > 0 ? rawImages : (giftItem.image_url ? [giftItem.image_url] : []);
+  const images = resolveGiftImages(giftItem);
   const imageUrl = images[state.currentImageIndex] || images[0];
   const title = giftItem.local_title || giftItem.title;
   const description = giftItem.description || '';
@@ -1708,7 +1727,7 @@ function updateModalContent(item) {
 function showNextImage() {
   const item = state.currentItemsList[state.currentModalIndex];
   if (!item || !item.gift_items) return;
-  const images = item.gift_items.images || [];
+  const images = resolveGiftImages(item.gift_items);
   if (images.length <= 1) return;
 
   state.currentImageIndex = (state.currentImageIndex + 1) % images.length;
@@ -1735,10 +1754,7 @@ function showPrevItem() {
 function buildItemCard(item) {
   var giftItem = item.gift_items;
   if (!giftItem) return null;
-  var imageUrl = giftItem.image_url;
-  if (!imageUrl && giftItem.images && Array.isArray(giftItem.images) && giftItem.images.length > 0) {
-    imageUrl = giftItem.images[0];
-  }
+  var imageUrl = resolveGiftImages(giftItem)[0];
   if (!imageUrl) {
     imageUrl = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23E6E8EF" width="200" height="200"/%3E%3Ctext fill="%23707487" font-family="sans-serif" font-size="14" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
   }
@@ -2059,7 +2075,11 @@ async function loadItems() {
     let query = supabaseClient
       .from('gift_scores')
       .select(`
-        *,
+        category,
+        sub_cluster,
+        cluster,
+        current_score,
+        created_at,
         gift_items!inner (
           id,
           title,
